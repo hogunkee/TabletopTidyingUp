@@ -1,3 +1,4 @@
+import json
 import os 
 import copy
 import nvisii as nv
@@ -6,13 +7,84 @@ import colorsys
 import subprocess 
 import math
 import pybullet as p 
+import pybullet_data
 import numpy as np
 from matplotlib import pyplot as plt
+from gen_sg import generate_sg
 from transform_utils import euler2quat, mat2quat, quat2mat
-from scene_utils import get_init_euler, generate_scene
+from scene_utils import cal_distance, generate_scene_shape, get_init_euler, pickable_objects_list
 from scene_utils import get_rotation, get_contact_objects, get_velocity
 from scene_utils import update_visual_objects 
 from scene_utils import remove_visual_objects, clear_scene
+
+obj_name_to_semantic_label = {
+    'blue_cup': 'cup',
+    'blue_plate': 'plate',
+    'blue_tea_box': 'tea_box',
+    'book_1': 'book',
+    'book_2': 'book',
+    'book_3': 'book',
+    'book_4': 'book',
+    'book_5': 'book',
+    'book_6': 'book',
+    'book_holder_2': 'book_holder',
+    'book_holder_3': 'book_holder',
+    'bowl': 'bowl',
+    'cleanser': 'cleanser',
+    'clear_box': 'basket',
+    'clear_box_1': 'basket',
+    'conditioner': 'conditioner',
+    'cracker_box': 'cracker_box',
+    'doraemon_bowl': 'bowl',
+    'doraemon_plate': 'tray',
+    'extra_large_clamp': 'clamp',
+    'flat_screwdriver': 'screwdriver',
+    'fork': 'fork',
+    'gelatin_box': 'box',
+    'glue_1': 'glue',
+    'glue_2': 'glue',
+    'green_bowl': 'bowl',
+    'green_cup': 'cup',
+    'grey_plate': 'plate',
+    'knife': 'knife',
+    'large_clamp': 'clamp',
+    'lipton_tea': 'tea_box',
+    'medium_clamp': 'clamp',
+    'mini_claw_hammer_1': 'hammer',
+    'mug': 'mug',
+    'orange_cup': 'cup',
+    'phillips_screwdriver': 'screwdriver',
+    'pink_tea_box': 'tea_box',
+    'plastic_apple': 'apple',
+    'plastic_banana': 'banana',
+    'plastic_lemon': 'lemon',
+    'plastic_orange': 'orange',
+    'plastic_peach': 'peach',
+    'plastic_pear': 'pear',
+    'plastic_strawberry': 'strawberry',
+    'plate': 'plate',
+    'power_drill': 'drill',
+    'pudding_box': 'box',
+    'round_plate_1': 'plate',
+    'round_plate_2': 'plate',
+    'round_plate_3': 'plate',
+    'round_plate_4': 'plate',
+    'scissors': 'scissors',
+    'shampoo': 'shampoo',
+    'small_clamp': 'clamp',
+    'spoon': 'spoon',
+    'square_plate_1': 'square_plate',
+    'square_plate_2': 'square_plate',
+    'square_plate_3': 'square_plate',
+    'square_plate_4': 'square_plate',
+    'stapler_1': 'stapler',
+    'stapler_2': 'stapler',
+    'sugar_box': 'box',
+    'two_color_hammer': 'hammer',
+    'yellow_bowl': 'bowl',
+    'yellow_cup': 'cup'
+    
+}
 
 class TabletopScenes(object):
     def __init__(self, opt):
@@ -26,13 +98,13 @@ class TabletopScenes(object):
 
         # Create a camera
         self.camera = None
-        self.set_camera_pose(eye=(0.6, 0, 1.2)) #(3, 0, 6))
+        self.set_top_view_camera()
         self.set_grid()
 
         self.initialize_nvisii_scene()
         self.initialize_pybullet_scene()
         self.init_euler = get_init_euler()
-        self.urdf_id_names = self.load_objects(opt.dataset, opt.objectset)
+        self.urdf_id_names = self.get_obj_dict(opt.dataset, opt.objectset)
 
         self.threshold = {'pose': 0.07,
                           'rotation': 0.15,
@@ -40,7 +112,14 @@ class TabletopScenes(object):
                           'angular': 0.003}
         self.pre_selected_objects = []
         self.current_pybullet_ids = []
+        self.objects_list = {}
+        self.spawn_obj_num = 0
 
+    def set_front_top_view_camera(self):
+        self.set_camera_pose(eye=(0.5, 0, 1.3), at=(0, 0, 0.3), up=(0, 0, 1))
+    
+    def set_top_view_camera(self):
+        self.set_camera_pose(eye=(0, 0, 1.5), at=(0, 0, 0.3), up=(-1, 0, 0))
 
     def set_camera_pose(self, eye, at=(0.1, 0, 0), up=(0, 0, 1)):
         if self.camera is None:
@@ -48,7 +127,7 @@ class TabletopScenes(object):
                 name = "camera",
                 transform = nv.transform.create("camera"),
                 camera = nv.camera.create_from_fov(
-                    name = "camera", field_of_view = 0.85,
+                    name = "camera", field_of_view = 0.60,
                     aspect = float(self.opt.width)/float(self.opt.height)
                 ))
 
@@ -103,38 +182,45 @@ class TabletopScenes(object):
     def initialize_pybullet_scene(self):
         # reset pybullet #
         p.resetSimulation()
-        p.setGravity(0,0,-10)
+        p.setAdditionalSearchPath(pybullet_data.getDataPath())
+        p.setGravity(0,0,-9.8)
+        p.setTimeStep(1 / 240)
+
+        # set the plane and table        
+        planeID = p.loadURDF("plane.urdf")
+        table_id = p.loadURDF("table/table.urdf", basePosition=[0.0,0.0,0.0], baseOrientation=[0.0,0.0,0.7071,0.7071])
+
 
         # Set the collision with the floor mesh
         # first lets get the vertices 
-        vertices = self.floor.get_mesh().get_vertices()
+        # vertices = self.floor.get_mesh().get_vertices()
 
         # get the position of the object
-        pos = self.floor.get_transform().get_position()
-        pos = [pos[0],pos[1],pos[2]]
-        scale = self.floor.get_transform().get_scale()
-        scale = [scale[0],scale[1],scale[2]]
-        rot = self.floor.get_transform().get_rotation()
-        rot = [rot[0],rot[1],rot[2],rot[3]]
+        # pos = self.floor.get_transform().get_position()
+        # pos = [pos[0],pos[1],pos[2]]
+        # scale = self.floor.get_transform().get_scale()
+        # scale = [scale[0],scale[1],scale[2]]
+        # rot = self.floor.get_transform().get_rotation()
+        # rot = [rot[0],rot[1],rot[2],rot[3]]
 
         # create a collision shape that is a convex hull
-        obj_col_id = p.createCollisionShape(
-            p.GEOM_MESH,
-            vertices = vertices,
-            meshScale = scale,
-        )
+        # obj_col_id = p.createCollisionShape(
+        #     p.GEOM_MESH,
+        #     vertices = vertices,
+        #     meshScale = scale,
+        # )
 
         # create a body without mass so it is static
-        p.createMultiBody(
-            baseCollisionShapeIndex = obj_col_id,
-            basePosition = pos,
-            baseOrientation= rot,
-        )    
+        # p.createMultiBody(
+        #     baseCollisionShapeIndex = obj_col_id,
+        #     basePosition = pos,
+        #     baseOrientation= rot,
+        # )    
         return
 
     def set_grid(self):
-        x = np.linspace(-0.8, 0.8, 5)
-        y = np.linspace(-0.8, 0.8, 5)
+        x = np.linspace(-5, -2, 5)
+        y = np.linspace(-5, -2, 5)
         xx, yy = np.meshgrid(x, y, sparse=False)
         self.xx = xx.reshape(-1)
         self.yy = yy.reshape(-1)
@@ -155,7 +241,7 @@ class TabletopScenes(object):
         nv.deinitialize()
         p.disconnect()
 
-    def load_objects(self, dataset, objectset):
+    def get_obj_dict(self, dataset, objectset):
         # lets create a bunch of objects 
         pybullet_object_path = self.opt.pybullet_object_path
         pybullet_object_names = sorted([m for m in os.listdir(pybullet_object_path) \
@@ -165,11 +251,12 @@ class TabletopScenes(object):
                             if os.path.isdir(os.path.join(ycb_object_path, m))])
         exclusion_list = ['047_plastic_nut', '063-b_marbles', '063-c_marbles', '063-f_marbles', '072-g_toy_airplane']
         for eo in exclusion_list:
-            ycb_object_names.remove(eo)
+            if eo in ycb_object_names:
+                ycb_object_names.remove(eo)
 
-        pybullet_split = 80
+        pybullet_split = 81
         pybullet_ids = ['pybullet-%d'%p for p in range(len(pybullet_object_names))]
-        ycb_split = 80
+        ycb_split = 81
         ycb_ids = ['ycb-%d'%y for y in range(len(ycb_object_names))]
         # urdf_id_names
         # key: {object_type}-{index} - e.g., 'pybullet-0'
@@ -211,32 +298,43 @@ class TabletopScenes(object):
         print('-'*60)
         return urdf_id_names
 
-    def select_objects(self, nb_objects):
-        nb_spawn = min(nb_objects, len(self.urdf_id_names))
-        urdf_selected = np.random.choice(list(self.urdf_id_names.keys()), nb_spawn, replace=False)
-        return urdf_selected
+    # def select_objects(self, nb_objects):
+    #     nb_spawn = min(nb_objects, len(self.urdf_id_names))
+    #     urdf_selected = np.random.choice(list(self.urdf_id_names.values()), nb_spawn, replace=False)
+    #     return urdf_selected
 
-    def spawn_objects(self, urdf_selected):
-        self.spawned_objects = copy.deepcopy(urdf_selected)
+    def spawn_objects(self, spawn_obj_list):
+        self.spawned_objects = copy.deepcopy(spawn_obj_list)
+
+        urdf_ids = list(self.urdf_id_names.keys())
+        obj_names = list(self.urdf_id_names.values())
 
         pybullet_ids = []
-        for idx, urdf_id in enumerate(urdf_selected):
+        self.base_rot = {}
+        for obj in spawn_obj_list:
+            urdf_id =  urdf_ids[obj_names.index(obj)]
             object_type = urdf_id.split('-')[0]
-            object_name = self.urdf_id_names[urdf_id]
             #(object_name, object_type) = self.urdf_id_names[urdf_id]
             if object_type=='pybullet':
-                urdf_path = os.path.join(self.opt.pybullet_object_path, object_name, 'model.urdf')
+                urdf_path = os.path.join(self.opt.pybullet_object_path, obj, 'model.urdf')
             else:
-                urdf_path = os.path.join(self.opt.ycb_object_path, object_name, 'poisson', 'model.urdf')
-                if object_name.startswith('022_windex_bottle') or object_name.startswith('023_wine_glass') or object_name.startswith('049_'):
-                    urdf_path = os.path.join(self.opt.ycb_object_path, object_name, 'tsdf', 'model.urdf')
+                urdf_path = os.path.join(self.opt.ycb_object_path, obj, 'poisson', 'model.urdf')
+                if obj.startswith('022_windex_bottle') or obj.startswith('023_wine_glass') or obj.startswith('049_'):
+                    urdf_path = os.path.join(self.opt.ycb_object_path, obj, 'tsdf', 'model.urdf')
                 else:
-                    urdf_path = os.path.join(self.opt.ycb_object_path, object_name, 'poisson', 'model.urdf')
-            obj_col_id = p.loadURDF(urdf_path, [self.xx[idx], self.yy[idx], 0.15], globalScaling=1.) #5.
-            pybullet_ids.append(obj_col_id)
+                    urdf_path = os.path.join(self.opt.ycb_object_path, obj, 'poisson', 'model.urdf')
+
+            roll, pitch, yaw = 0, 0, 0
+            if urdf_id in self.init_euler:
+                roll, pitch, yaw = np.array(self.init_euler[urdf_id]) * np.pi / 2
+            rot = get_rotation(roll, pitch, yaw)
+            obj_id = p.loadURDF(urdf_path, [self.xx[self.spawn_obj_num], self.yy[self.spawn_obj_num], 0.15], rot, globalScaling=1.) #5.
+            self.base_rot[obj_id] = rot
+            pybullet_ids.append(obj_id)
+            self.spawn_obj_num += 1
+            self.objects_list[int(obj_id)] = obj
 
         nv.ids = update_visual_objects(pybullet_ids, "")
-        self.pre_selected_objects = copy.deepcopy(pybullet_ids)
         self.current_pybullet_ids = copy.deepcopy(pybullet_ids)
 
     def set_floor(self, texture_id=-1):
@@ -253,105 +351,127 @@ class TabletopScenes(object):
         self.floor.get_material().set_base_color_texture(floor_tex)
         self.floor.get_material().set_roughness_texture(tex)
 
-    def arrange_objects(self, scene_idx, urdf_selected):
+    def arrange_objects(self, scene_idx, select=True, random=False):
         pybullet_ids = copy.deepcopy(self.current_pybullet_ids)
 
         # set objects #
         count_scene_trials = 0
-        selected_objects = np.random.choice(pybullet_ids, self.opt.inscene_objects, replace=False)
+        selected_objects = np.random.choice(pybullet_ids, self.opt.inscene_objects, replace=False) if select else pybullet_ids
+
         while True:
             # generate scene in a 'line' shape #
-            init_positions = generate_scene(self.opt.scene_type, self.opt.inscene_objects)
-            init_rotations = []
-            for idx, urdf_id in enumerate(urdf_selected):
-                obj_col_id = pybullet_ids[idx]
-                # hide objects placed on the table #
-                if obj_col_id in self.pre_selected_objects:
-                    pos_hidden = [self.xx[idx], self.yy[idx], -1]
-                    p.resetBasePositionAndOrientation(obj_col_id, pos_hidden, [0, 0, 0, 1])
+            init_positions, init_rotations = generate_scene_shape(self.opt.scene_type, self.opt.inscene_objects)
+            # init_rotations = []
+            
+            # TODO
+            # init_positions, init_rotations = generate_random_scene()
 
-                # place new objects #
-                if obj_col_id in selected_objects:
-                    sidx = np.where(selected_objects==obj_col_id)[0][0]
-                    pos_sel = init_positions[sidx]
-                    roll, pitch, yaw = 0, 0, 0
-                    if urdf_id in self.init_euler:
-                        roll, pitch, yaw = np.array(self.init_euler[urdf_id]) * np.pi / 2
-                    rot = get_rotation(roll, pitch, yaw)
+            # TODO
+            # init_positions, init_rotations = load_scene_template()
+            
+
+            #hide objects placed on the table 
+            for obj_id in self.pre_selected_objects:
+                pos_hidden = [self.xx[pybullet_ids.index(obj_id)], self.yy[pybullet_ids.index(obj_id)], 0.15 ]
+                p.resetBasePositionAndOrientation(obj_id, pos_hidden, self.base_rot[obj_id])
+            
+            # place new objects #
+            set_base_rot = True if init_rotations == [] else False               
+            for idx, obj_id in enumerate(selected_objects):
+                pos_sel = init_positions[idx]
+                if set_base_rot:
+                    rot = self.base_rot[obj_id]
                     init_rotations.append(rot)
-                    p.resetBasePositionAndOrientation(obj_col_id, pos_sel, rot)
+                else: # TODO: set object rotation as template's rotation
+                    # init_rotations[idx] = init_rotations[idx] * ~~ 
+                    pass
+
+                p.resetBasePositionAndOrientation(obj_id, pos_sel, rot)
+                
             self.pre_selected_objects = []
             init_rotations = np.array(init_rotations)
 
-            # check feasibility #
-            init_feasible = False 
-            j = 0
-            while j<2000 and not init_feasible:
-                p.stepSimulation()
-                if j%10==0:
-                    current_poses = []
-                    current_rotations = []
-                    for obj_col_id in selected_objects:
-                        pos, rot = p.getBasePositionAndOrientation(obj_col_id)
-                        current_poses.append(pos)
-                        current_rotations.append(rot)
-
-                    current_poses = np.array(current_poses)
-                    current_rotations = np.array(current_rotations)
-                    pos_diff = np.linalg.norm(current_poses[:, :2] - init_positions[:, :2], axis=1)
-                    rot_diff = np.linalg.norm(current_rotations - init_rotations, axis=1)
-                    if (pos_diff > self.threshold['pose']).any() or (rot_diff > self.threshold['rotation']).any():
-                        break
-                    vel_linear, vel_rot = get_velocity(selected_objects)
-                    stop_linear = (np.linalg.norm(vel_linear) < self.threshold['linear'])
-                    stop_rotation = (np.linalg.norm(vel_rot) < self.threshold['angular'])
-                    if stop_linear and stop_rotation:
-                        init_feasible = True
-                j += 1
-            if init_feasible:
-                break
+            is_feasible = self.feasibility_check(selected_objects, init_positions, init_rotations)
+            
             count_scene_trials += 1
-            if count_scene_trials > 5:
+            if is_feasible or count_scene_trials > 5:
                 break
 
         self.pre_selected_objects = copy.deepcopy(selected_objects)
         # if failed to place objects robustly #
-        if not init_feasible:
+        if not is_feasible:
             return False
+        
         nv.ids = update_visual_objects(pybullet_ids, "", nv.ids)
-        self.render_and_save_scene(selected_objects, scene_idx)
+        
+        ################################################################ TODO: change this part
+        data_objects_list = {id: self.objects_list[id] for id in selected_objects}
+        self.save_data('test', scene_idx, data_objects_list)
+        
+        # self.render_and_save_scene(selected_objects, scene_idx)
         return True
 
+    # need to change. spherical objects are not considered.
+    def feasibility_check(self, selected_objects, init_positions, init_rotations):
+        init_feasible = False 
+        j = 0
+        while j<2000 and not init_feasible:
+            p.stepSimulation()
+            if j%10==0:
+                current_poses = []
+                current_rotations = []
+                for obj_id in selected_objects:
+                    pos, rot = p.getBasePositionAndOrientation(obj_id)
+                    current_poses.append(pos)
+                    current_rotations.append(rot)
 
-    def messup_objects(self, obj_idx, scene_idx, urdf_selected):
+                current_poses = np.array(current_poses)
+                current_rotations = np.array(current_rotations)
+                pos_diff = np.linalg.norm(current_poses[:, :2] - init_positions[:, :2], axis=1)
+                rot_diff = np.linalg.norm(current_rotations - init_rotations, axis=1)
+                if (pos_diff > self.threshold['pose']).any() or (rot_diff > self.threshold['rotation']).any():
+                    break
+                vel_linear, vel_rot = get_velocity(selected_objects)
+                stop_linear = (np.linalg.norm(vel_linear) < self.threshold['linear'])
+                stop_rotation = (np.linalg.norm(vel_rot) < self.threshold['angular'])
+                if stop_linear and stop_rotation:
+                    init_feasible = True
+            j += 1
+        return init_feasible
+
+    # TODO : change this function to move pickable objects to a random place
+    def random_messup_objects(self, scene_idx):
         pybullet_ids = copy.deepcopy(self.current_pybullet_ids)
         selected_objects = copy.deepcopy(self.pre_selected_objects)
 
+        # TODO : select pickable object
+        # move_obj_id = ~~
+        move_obj_id = np.random.choice(selected_objects)
+        
         # save current poses & rots #
         pos_saved, rot_saved = {}, {}
-        for obj_col_id in selected_objects:
-            pos, rot = p.getBasePositionAndOrientation(obj_col_id)
-            pos_saved[obj_col_id] = pos
-            rot_saved[obj_col_id] = rot
+        for obj_id in selected_objects:
+            pos, rot = p.getBasePositionAndOrientation(obj_id)
+            pos_saved[obj_id] = pos
+            rot_saved[obj_id] = rot
 
         # set poses & rots #
-        target_col_id = selected_objects[obj_idx]
-        idx = pybullet_ids.index(target_col_id)
-        urdf_id = urdf_selected[idx]
+        
         place_feasible = False
         count_scene_repose = 0
         while not place_feasible:
             # get the pose of the objects
-            pos, rot = p.getBasePositionAndOrientation(target_col_id)
+            pos, rot = p.getBasePositionAndOrientation(move_obj_id)
             collisions_before = get_contact_objects()
 
             pos_new = 0.9*(np.random.rand(3) - 0.5)
-            pos_new[2] = 0.15
-            roll, pitch, yaw = 0, 0, 0
-            if urdf_id in self.init_euler:
-                roll, pitch, yaw = np.array(self.init_euler[urdf_id]) * np.pi / 2
-            rot = get_rotation(roll, pitch, yaw)
-            p.resetBasePositionAndOrientation(target_col_id, pos_new, rot)
+            pos_new[2] = 0.65
+            
+            rot = self.base_rot[move_obj_id]
+            # random rotation
+            # rot = ~~
+            
+            p.resetBasePositionAndOrientation(move_obj_id, pos_new, rot)
             collisions_after = set()
             for _ in range(200):
                 p.stepSimulation()
@@ -367,14 +487,14 @@ class TabletopScenes(object):
                     obj1, obj2 = collision
                     obj_to_reset.add(obj1)
                     obj_to_reset.add(obj2)
-                obj_to_reset = obj_to_reset - set([target_col_id])
-                for reset_col_id in obj_to_reset:
-                    p.resetBasePositionAndOrientation(reset_col_id, pos_saved[reset_col_id], rot_saved[reset_col_id])
+                obj_to_reset = obj_to_reset - set([move_obj_id])
+                for reset_obj_id in obj_to_reset:
+                    p.resetBasePositionAndOrientation(reset_obj_id, pos_saved[reset_obj_id], rot_saved[reset_obj_id])
             else:
                 place_feasible = True
-                pos, rot = p.getBasePositionAndOrientation(target_col_id)
-                pos_saved[target_col_id] = pos
-                rot_saved[target_col_id] = rot
+                pos, rot = p.getBasePositionAndOrientation(move_obj_id)
+                pos_saved[move_obj_id] = pos
+                rot_saved[move_obj_id] = rot
             count_scene_repose += 1
             if count_scene_repose > 10:
                 break
@@ -391,32 +511,84 @@ class TabletopScenes(object):
                 if stop_linear and stop_rotation:
                     break
         nv.ids = update_visual_objects(pybullet_ids, "", nv.ids)
-        self.render_and_save_scene(selected_objects, scene_idx)
+        
+        ############################################################ TODO: change this part
+        data_objects_list = {id: self.objects_list[id] for id in selected_objects}
+        self.save_data('test', scene_idx, data_objects_list)
+        # self.render_and_save_scene(selected_objects, scene_idx)
         return True
 
-    def render_and_save_scene(self, selected_objects, scene_idx):
+    def render_and_save_scene(self,out_folder):
         nv.render_to_file(
             width=int(self.opt.width), height=int(self.opt.height), 
             samples_per_pixel=int(self.opt.spp),
-            file_path=f"{self.opt.outf}/rgb_{str(scene_idx).zfill(5)}.png"
+            file_path=f"{out_folder}/rgb.png"
         )
         d = nv.render_data(
             width=int(self.opt.width), height=int(self.opt.height),
             start_frame=0, frame_count=5, bounce=0, options='depth',
         )
         depth = np.array(d).reshape([int(self.opt.height), int(self.opt.width), -1])[:, :, 0]
-        np.save(f"{self.opt.outf}/depth_{str(scene_idx).zfill(5)}.npy", depth)
+        np.save(f"{out_folder}/depth.npy", depth)
+        
         entity_id = nv.render_data(
             width=int(self.opt.width), height=int(self.opt.height),
             start_frame=0, frame_count=5, bounce=0, options='entity_id',
         )
         entity = np.array(entity_id)
         entity = entity.reshape([int(self.opt.height), int(self.opt.width), -1])[:, :, 0]
-        segmap = np.zeros_like(entity)
-        for s, obj in enumerate(sorted(selected_objects)):
-            segmap[entity == (obj + 2)] = s + 1
-        np.save(f"{self.opt.outf}/seg_{str(scene_idx).zfill(5)}.npy", segmap)
+        # segmap = np.zeros_like(entity)
+        # for s, obj in enumerate(sorted(selected_objects)):
+        #     segmap[entity == (obj + 2)] = s + 1
+        np.save(f"{out_folder}/seg.npy", entity)
         return
+
+    def save_data(self, folder_name, scene_idx, objects_list):
+        """Save data to a file."""
+        obj_info = {}
+        out_folder = self.opt.out_folder + '/' + folder_name + '/' + str(scene_idx).zfill(5)
+        if os.path.isdir(out_folder):
+            print(f'folder {out_folder}/ exists')
+        else:
+            os.makedirs(out_folder)
+            print(f'created folder {out_folder}/')
+        self.render_and_save_scene(out_folder)
+        
+        obj_semantic_label = {}
+        obj_aabb = {}
+        obj_adjacency = {}
+        obj_state = {}
+        n_obj = {}
+        new_objects_list = {}
+        for id,obj_name in objects_list.items():
+            id = int(id)
+            new_objects_list[id] = obj_name
+            n = n_obj.get(obj_name_to_semantic_label[obj_name], 0)
+            n_obj[obj_name_to_semantic_label[obj_name]] = n + 1
+            obj_semantic_label[id] = obj_name_to_semantic_label[obj_name] + '_' + str(n)
+            obj_aabb[id] = p.getAABB(id)
+            obj_state[id] = p.getBasePositionAndOrientation(id)
+            overlapping_objs = p.getOverlappingObjects(obj_aabb[id][0], obj_aabb[id][1])
+            obj_adjacency[id] = []
+            for obj in overlapping_objs:
+                obj_adjacency[id].append(obj[0])
+        
+        obj_info['objects'] = new_objects_list
+        obj_info['semantic_label'] = obj_semantic_label
+        obj_info['obj_aabb'] = obj_aabb
+        obj_info['distances'] = cal_distance(new_objects_list)
+        obj_info['state'] = obj_state
+        sg = generate_sg(obj_info)
+        obj_info['pickable_objects'] = pickable_objects_list(new_objects_list, sg)
+        obj_info['scene_graph'] = sg
+        
+        with open(out_folder+"/obj_info.json", "w") as f:
+            json.dump(obj_info, f)
+        
+        return
+
+
+
 
 
 if __name__=='__main__':
@@ -425,29 +597,38 @@ if __name__=='__main__':
     opt.inscene_objects = 4 #5
     opt.scene_type = 'line' # 'random' or 'line'
     opt.spp = 32 #64 
-    opt.width = 500
-    opt.height = 500 
+    opt.width = 480
+    opt.height = 360
     opt.noise = False
     opt.nb_scenes = 1000
     opt.nb_frames = 5
-    opt.outf = '/home/gun/ssd/disk/ur5_tidying_data/line-shape/images'
+    opt.out_folder = '/home/wooseoko/workspace/hogun/pybullet_scene_gen/TabletopTidyingUp/dataset'
     opt.nb_randomset = 20
     opt.dataset = 'train' #'train' or 'test'
     opt.objectset = 'pybullet' #'pybullet'/'ycb'/'all'
-    opt.pybullet_object_path = '/home/gun/Desktop/pybullet-URDF-models/urdf_models/models'
-    opt.ycb_object_path = '/home/gun/ssd/disk/YCB_dataset'
+    opt.pybullet_object_path = '/home/wooseoko/workspace/hogun/pybullet_scene_gen/TabletopTidyingUp/pybullet-URDF-models/urdf_models/models'
+    opt.ycb_object_path = '/home/wooseoko/workspace/hogun/pybullet_scene_gen/TabletopTidyingUp/YCB_dataset'
 
-    if os.path.isdir(opt.outf):
-        print(f'folder {opt.outf}/ exists')
+    if os.path.isdir(opt.out_folder):
+        print(f'folder {opt.out_folder}/ exists')
     else:
-        os.makedirs(opt.outf)
-        print(f'created folder {opt.outf}/')
-
+        os.makedirs(opt.out_folder)
+        print(f'created folder {opt.out_folder}/')
+        
+    #pre defined objects to spawn. 
+    #if you want, you can get the list of objects using select_objects. (need to change urdf_ids to urdf_names)
+    spawn_objects_list = ['bowl', 'spoon', 'knife', 'blue_cup', 'book_1', 'book_2', 'book_3', 'cleanser', 'conditioner', 'doraemon_bowl', 'fork', 'green_bowl']
+    
     ts = TabletopScenes(opt)
     for nset in range(opt.nb_randomset):
-        urdf_selected = ts.select_objects(opt.nb_objects)
-        ts.spawn_objects(urdf_selected)
-        num_exist_frames = len([f for f in os.listdir(f"{opt.outf}") if '.png' in f])
+        # urdf_selected = ts.select_objects(opt.nb_objects)
+        ts.spawn_objects(spawn_objects_list)
+        
+        # TODO : change this part##################
+        # num_exist_frames = len([f for f in os.listdir(f"{opt.outf}") if '.png' in f])
+        num_exist_frames = 0
+        #############################
+        
         ns = 0
         while ns < opt.nb_scenes:
             ts.set_floor(texture_id=-1)
@@ -456,7 +637,7 @@ if __name__=='__main__':
             nf = 0
             print(f'rendering scene {str(nset)}-{str(ns).zfill(5)}-{str(nf)}', end='\r')
             scene_idx = num_exist_frames + ns * opt.nb_frames + nf
-            success_placement = ts.arrange_objects(scene_idx, urdf_selected)
+            success_placement = ts.arrange_objects(scene_idx)
             if not success_placement:
                 continue
 
@@ -465,7 +646,7 @@ if __name__=='__main__':
             while nf < int(opt.nb_frames):
                 print(f'rendering scene {str(nset)}-{str(ns).zfill(5)}-{str(nf)}', end='\r')
                 scene_idx = num_exist_frames + ns * opt.nb_frames + nf
-                success_placement = ts.messup_objects(nf-1, scene_idx, urdf_selected)
+                success_placement = ts.random_messup_objects(scene_idx)
                 if not success_placement:
                     continue
                 nf += 1

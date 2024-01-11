@@ -88,7 +88,6 @@ p.setTimeStep(1 / 240)
 # Create a table collision shape
 
 planeID = p.loadURDF("plane.urdf")
-startPos = [0, 0, 1]
 startOrientation = p.getQuaternionFromEuler([0, 0, 0])
 table_id = p.loadURDF("table/table.urdf", basePosition=[0.0,0.0,0.0], baseOrientation=[0.0,0.0,0.7071,0.7071])
 

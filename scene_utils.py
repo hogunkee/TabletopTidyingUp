@@ -75,11 +75,12 @@ def get_init_euler():
     return init_euler
 
 
-def generate_scene(scene_type, num_objects):
-    z_default = 0.15
+def generate_scene_shape(scene_type, num_objects):
+    z_default = 0.7
     if scene_type=='random':
         positions = 1*(np.random.rand(num_objects, 3) - 0.5)
         positions[:, 2] = z_default
+        rotations = [] # TODO: add random rotations (z-axis)
     elif scene_type=='line':
         distance_enough = False
         while not distance_enough:
@@ -90,7 +91,8 @@ def generate_scene(scene_type, num_objects):
         ys = np.linspace(y1, y2, num_objects)
         zs = np.ones(num_objects) * z_default + np.arange(num_objects) * 0.05
         positions = np.concatenate([xs, ys, zs]).reshape(3, num_objects).T
-    return positions
+        rotations = []
+    return positions, rotations
 
 def generate_scene_at_center(scene_type, num_objects):
     z_default = 0.15
@@ -293,3 +295,31 @@ def clear_scene():
     nv.entity.clear_all()
     nv.clear_all()
     return
+
+def pickable_objects_list(objects_list, sg):
+    pickable_objects = []
+    for obj_id in objects_list.keys():
+        pickable = True
+        for pair in sg['on']:
+            if obj_id == pair[0]:
+                pickable = False
+                break
+        if pickable:
+            pickable_objects.append(obj_id)
+            
+    return pickable_objects
+
+
+def cal_distance(objects_list):
+    dist = {}
+    for i in objects_list.keys():
+        for j in objects_list.keys():
+            if i == j:
+                continue
+            else:
+                dist_ = p.getClosestPoints(i, j, 2.0)
+                dist[str((i,j))] = 1000
+                for idx in range(len(dist_)):
+                    dist[str((i,j))] = min(dist_[idx][8], dist[str((i,j))])
+ 
+    return dist
