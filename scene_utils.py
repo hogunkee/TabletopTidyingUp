@@ -1,3 +1,4 @@
+import copy
 import os
 import numpy as np
 import nvisii as nv
@@ -74,17 +75,28 @@ def get_init_euler():
         init_euler['ycb-%d'%y] = ycb_init_euler[y]
     return init_euler
 
+def generate_scene_random(num_objects):
+    positions = []
+    rotations = []
+    for i in range(num_objects):
+        pos, rot = get_random_pos_orn([0,0,0,1])
+        positions.append(pos)
+        rotations.append(rot)
+
+    return positions, rotations
 
 def generate_scene_shape(scene_type, num_objects):
     z_default = 0.7
     if scene_type=='random':
-        positions = 1*(np.random.rand(num_objects, 3) - 0.5)
-        positions[:, 2] = z_default
+        positions = np.array(random_pos_on_table())
+        # positions[:, 2] = z_default
         rotations = [] # TODO: add random rotations (z-axis)
     elif scene_type=='line':
         distance_enough = False
         while not distance_enough:
-            x1, x2, y1, y2 = 0.9*(np.random.rand(4) - 0.5)
+            x1, y1 = np.array(random_pos_on_table())[:2]
+            x2, y2 = np.array(random_pos_on_table())[:2]
+
             distance_enough = (np.linalg.norm([x1 - x2, y1 - y2]) > 0.3) \
                                 and (np.linalg.norm([x1 - x2, y1 - y2]) < 0.5)
         xs = np.linspace(x1, x2, num_objects)
@@ -145,7 +157,9 @@ def update_visual_objects(object_ids, pkg_path, nv_objects=None):
     # to load the geometries and create entities. 
     if nv_objects is None:
         nv_objects = { }
-    for object_id in object_ids:
+    objs = copy.deepcopy(object_ids)
+    objs.append(1)
+    for object_id in objs:
         for idx, visual in enumerate(p.getVisualShapeData(object_id)):
 
             # Extract visual data from pybullet
@@ -323,3 +337,42 @@ def cal_distance(objects_list):
                     dist[str((i,j))] = min(dist_[idx][8], dist[str((i,j))])
  
     return dist
+
+def check_on_table(objects_list):
+    print("check on table & image")
+    for obj_id in objects_list.keys():
+        pos, orn = p.getBasePositionAndOrientation(obj_id)
+        if(-0.4 < pos[0] < 0.4 and -0.6 < pos[1] < 0.6 and 0.6 < pos[2] < 1.0):
+            pass
+        else:
+            print(objects_list[obj_id], "is not on the table")
+            return False 
+    return True           
+
+def random_pos_on_table():
+    pos_x = np.random.uniform(-0.3, 0.3)
+    pos_y = np.random.uniform(-0.4, 0.4)
+    pos_z = np.random.uniform(0.75, 0.8)
+    return pos_x, pos_y, pos_z
+
+
+def get_random_pos_orn(orig_orn):
+    rot_angle = np.random.uniform(-180, 180) # counter-clockwise
+    pos = random_pos_on_table()
+    quat = p.getQuaternionFromEuler([0,0,rot_angle * np.pi / 180.0])
+    new_rot = quaternion_multiply(quat, orig_orn)
+    return pos, new_rot
+
+def quaternion_multiply(quaternion1, quaternion0):
+    x0, y0, z0, w0 = quaternion0
+    x1, y1, z1, w1 = quaternion1
+    return (x1 * w0 + y1 * z0 - z1 * y0 + w1 * x0,
+                     -x1 * z0 + y1 * w0 + z1 * x0 + w1 * y0,
+                     x1 * y0 - y1 * x0 + z1 * w0 + w1 * z0,
+                     -x1 * x0 - y1 * y0 - z1 * z0 + w1 * w0)
+    
+    
+def move_object(obj_id, pos, orn):
+    p.resetBasePositionAndOrientation(obj_id, pos, orn)
+    for i in range(100):
+        p.stepSimulation()

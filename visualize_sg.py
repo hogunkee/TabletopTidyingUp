@@ -124,6 +124,6 @@ def visualize_sg(obj_info):
     imgkit.from_file('http://localhost:5050/', 'out.jpg')
 
 if __name__ == '__main__':
-    with open('./dataset/collect_test1/obj_info.json', 'r') as f:
+    with open('./dataset/test/00001/obj_info.json', 'r') as f:
         obj_info = json.load(f)
     visualize_sg(obj_info)

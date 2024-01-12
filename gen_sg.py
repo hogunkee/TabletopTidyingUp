@@ -87,11 +87,12 @@ def generate_sg(obj_info):
                         relation.append('on')
                 elif obj2.posA[0] < obj1.posA[0] and obj2.posB[0] > obj1.posB[0] and obj2.posA[1] < obj1.posA[1] and obj2.posB[1] > obj1.posB[1]:
                     if obj2.posB[2] < obj1.posB[2]:
+                        relation.append('under')               
+                if relation == []:
+                    if obj1.center[2] < obj2.posA[2] and obj2.center[2] > obj1.posB[2]:
+                        relation.append('on')
+                    elif obj2.center[2] < obj1.posA[2] and obj1.center[2] > obj2.posB[2]:
                         relation.append('under')
-                if obj1.center[2] < obj2.posA[2] and obj2.center[2] > obj1.posB[2]:
-                    relation.append('on')
-                elif obj2.center[2] < obj1.posA[2] and obj1.center[2] > obj2.posB[2]:
-                    relation.append('under')
             
             else:
                 if (obj1.center[2] < obj2.posA[2] and obj2.center[2] > obj1.posB[2]) or (obj2.center[2] < obj1.posA[2] and obj1.center[2] > obj2.posB[2]):
@@ -228,7 +229,8 @@ def refine_sg(sg):
     reverse_relation = {'left': 'right', 'right': 'left', 'front': 'behind', 'behind': 'front', 'on': 'under', 'under': 'on', 'leftbehind': 'rightfront', 'leftfront': 'rightbehind', 'rightbehind': 'leftfront', 'rightfront': 'leftbehind'}
 
     for id1,id2,rel in sg:
-        rel_pairs[get_rel_string(rel)].append((id1,id2))
+        if rel != []:
+            rel_pairs[get_rel_string(rel)].append((id1,id2))
         
     for rel, pairs in rel_pairs.items():
         for id1, id2 in pairs:
