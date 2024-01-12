@@ -1,6 +1,7 @@
 import math
 import pybullet as p
 import numpy as np
+from scene_utils import get_contact_objects
 
 class Object:
     def __init__(self, id, label):
@@ -15,7 +16,8 @@ class Object:
         self.near1 = {}
         self.near2 = {}
         self.final_near = []
-        
+        self.contact_objs = []
+
     def cal_center(self):
         self.center = [np.mean([a,b]) for a,b in zip(self.posA, self.posB)]
         self.x_len = np.abs(self.posA[0] - self.posB[0])
@@ -31,6 +33,7 @@ def generate_sg(obj_info):
     obj_aabb = obj_info['obj_aabb']
     obj_distance = obj_info['distances']
     
+    contacts = get_contact_objects()
     obj_instances = {}
     for obj_id, label in objects_list.items():
         obj = Object(obj_id, label)
@@ -38,6 +41,7 @@ def generate_sg(obj_info):
         obj.posB = obj_aabb[obj_id][1]
         obj.cal_center()
         obj_instances[obj_id] = obj
+
 
 
     for obj in obj_instances.values():
@@ -50,6 +54,8 @@ def generate_sg(obj_info):
                     obj.near1[obj_.id] = dist
                 elif dist < obj.dist_threshold2:
                     obj.near2[obj_.id] = dist
+            if (obj.id, obj_.id) in contacts or (obj_.id, obj.id) in contacts:
+                obj.contact_objs.append(obj_.id)
                     
     for obj in obj_instances.values():
         if obj.adjacency != []:
@@ -83,15 +89,15 @@ def generate_sg(obj_info):
             if obj2_id in obj1.adjacency:
                 # check if obj_ is on the obj
                 if obj1.posA[0] < obj2.posA[0] and obj1.posB[0] > obj2.posB[0] and obj1.posA[1] < obj2.posA[1] and obj1.posB[1] > obj2.posB[1]:
-                    if obj1.posB[2] < obj2.posB[2]:
+                    if obj1.posB[2] < obj2.posB[2] and 1 not in obj2.contact_objs:
                         relation.append('on')
                 elif obj2.posA[0] < obj1.posA[0] and obj2.posB[0] > obj1.posB[0] and obj2.posA[1] < obj1.posA[1] and obj2.posB[1] > obj1.posB[1]:
-                    if obj2.posB[2] < obj1.posB[2]:
+                    if obj2.posB[2] < obj1.posB[2] and 1 not in obj1.contact_objs:
                         relation.append('under')               
                 if relation == []:
-                    if obj1.center[2] < obj2.posA[2] and obj2.center[2] > obj1.posB[2]:
+                    if obj1.center[2] < obj2.posA[2] and obj2.center[2] > obj1.posB[2] and 1 not in obj2.contact_objs:
                         relation.append('on')
-                    elif obj2.center[2] < obj1.posA[2] and obj1.center[2] > obj2.posB[2]:
+                    elif obj2.center[2] < obj1.posA[2] and obj1.center[2] > obj2.posB[2] and 1 not in obj1.contact_objs:
                         relation.append('under')
             
             else:

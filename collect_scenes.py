@@ -12,7 +12,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from gen_sg import generate_sg
 from transform_utils import euler2quat, mat2quat, quat2mat
-from scene_utils import cal_distance, check_on_table, generate_scene_random, generate_scene_shape, get_init_euler, get_random_pos_orn, move_object, pickable_objects_list, quaternion_multiply, random_pos_on_table
+from scene_utils import cal_distance, check_on_table, generate_scene_random, generate_scene_shape, get_init_euler, get_random_pos_from_grid, get_random_pos_orn, move_object, pickable_objects_list, quaternion_multiply, random_pos_on_table
 from scene_utils import get_rotation, get_contact_objects, get_velocity
 from scene_utils import update_visual_objects 
 from scene_utils import remove_visual_objects, clear_scene
@@ -97,8 +97,10 @@ class TabletopScenes(object):
         physicsClient = p.connect(p.GUI) # non-graphical version
 
         # Create a camera
-        self.camera = None
+        self.camera_top = None
+        self.camera_front_top = None
         self.set_top_view_camera()
+        self.set_front_top_view_camera()
         self.set_grid()
 
         self.initialize_nvisii_scene()
@@ -109,31 +111,30 @@ class TabletopScenes(object):
         self.threshold = {'pose': 0.07,
                           'rotation': 0.15,
                           'linear': 0.003,
-                          'angular': 0.003}
+                          'angular': 0.03}
         self.pre_selected_objects = []
         self.current_pybullet_ids = []
         self.objects_list = {}
         self.spawn_obj_num = 0
 
     def set_front_top_view_camera(self):
-        self.set_camera_pose(eye=(0.5, 0, 1.3), at=(0, 0, 0.3), up=(0, 0, 1))
+        self.camera_front_top = self.set_camera_pose(eye=(0.5, 0, 1.3), at=(0, 0, 0.3), up=(0, 0, 1), view = 'front_top')
     
     def set_top_view_camera(self):
-        self.set_camera_pose(eye=(0, 0, 1.45), at=(0, 0, 0.3), up=(-1, 0, 0))
+        self.camera_top = self.set_camera_pose(eye=(0, 0, 1.45), at=(0, 0, 0.3), up=(-1, 0, 0))
 
-    def set_camera_pose(self, eye, at=(0.1, 0, 0), up=(0, 0, 1)):
-        if self.camera is None:
-            self.camera = nv.entity.create(
-                name = "camera",
-                transform = nv.transform.create("camera"),
-                camera = nv.camera.create_from_fov(
-                    name = "camera", field_of_view = 60 * np.pi / 180,
-                    aspect = float(self.opt.width)/float(self.opt.height)
-                ))
+    def set_camera_pose(self, eye, at=(0.1, 0, 0), up=(0, 0, 1), view='top'):
+        camera = nv.entity.create(
+            name = "camera_" + view,
+            transform = nv.transform.create("camera_" + view),
+            camera = nv.camera.create_from_fov(
+                name = "camera_" + view, field_of_view = 60 * np.pi / 180,
+                aspect = float(self.opt.width)/float(self.opt.height)
+            ))
 
-        self.camera.get_transform().look_at(at=at, up=up, eye=eye)
-        nv.set_camera_entity(self.camera)
-        return
+        camera.get_transform().look_at(at=at, up=up, eye=eye)
+        # nv.set_camera_entity(camera)
+        return camera
 
 
     def initialize_nvisii_scene(self):
@@ -183,7 +184,7 @@ class TabletopScenes(object):
         # reset pybullet #
         p.resetSimulation()
         p.setAdditionalSearchPath(pybullet_data.getDataPath())
-        p.setGravity(0,0,-9.8)
+        p.setGravity(0,0,-98)
         p.setTimeStep(1 / 240)
 
         # set the plane and table        
@@ -237,8 +238,10 @@ class TabletopScenes(object):
         self.spawn_obj_num = 0
         p.resetSimulation()
         clear_scene()
-        self.camera = None
+        self.camera_top = None
+        self.camera_front_top = None
         self.set_top_view_camera()
+        self.set_front_top_view_camera()
         self.initialize_nvisii_scene()
         self.initialize_pybullet_scene()
         
@@ -388,7 +391,7 @@ class TabletopScenes(object):
 
                 move_object(obj_id, pos_sel, rot)        
                         
-            self.pre_selected_objects = []
+            self.pre_selected_objects = copy.deepcopy(selected_objects)
             init_rotations = np.array(init_rotations)
 
             is_feasible = self.feasibility_check(selected_objects, init_positions, init_rotations) if not random else self.stable_check(selected_objects)
@@ -476,9 +479,6 @@ class TabletopScenes(object):
         return is_leaning_obj
             
                 
-            
-        
-
     # TODO : change this function to move pickable objects to a random place
     def random_messup_objects(self, scene_id, random_rot = True):
         pybullet_ids = copy.deepcopy(self.current_pybullet_ids)
@@ -509,7 +509,8 @@ class TabletopScenes(object):
             else :
                 pos = random_pos_on_table()
                 rot = self.base_rot[move_obj_id]
-            
+            if self.opt.mess_grid:
+                pos = get_random_pos_from_grid()
             p.resetBasePositionAndOrientation(move_obj_id, pos_new, rot)
             collisions_after = set()
             for _ in range(200):
@@ -558,11 +559,15 @@ class TabletopScenes(object):
         self.save_data(scene_id, data_objects_list)
         return True
 
-    def render_and_save_scene(self,out_folder):
+    def render_and_save_scene(self,out_folder, camera):
+        if camera == 'top':
+            nv.set_camera_entity(self.camera_top)
+        elif camera == 'front_top':
+            nv.set_camera_entity(self.camera_front_top)
         nv.render_to_file(
             width=int(self.opt.width), height=int(self.opt.height), 
             samples_per_pixel=int(self.opt.spp),
-            file_path=f"{out_folder}/rgb.png"
+            file_path=f"{out_folder}/rgb_{camera}.png"
         )
         d = nv.render_data(
             width=int(self.opt.width), height=int(self.opt.height),
@@ -572,7 +577,7 @@ class TabletopScenes(object):
         depth = np.flip(depth, axis = 0)
         depth[np.isinf(depth)] = 3
         depth[depth < 0] = 3
-        np.save(f"{out_folder}/depth.npy", depth)
+        np.save(f"{out_folder}/depth_{camera}.npy", depth)
         
         entity_id = nv.render_data(
             width=int(self.opt.width), height=int(self.opt.height),
@@ -584,7 +589,7 @@ class TabletopScenes(object):
         entity = np.flip(entity, axis = 0)
         entity[np.isinf(entity)] = -1
         entity[entity>self.opt.nb_objects + 50] = -1
-        np.save(f"{out_folder}/seg.npy", entity)
+        np.save(f"{out_folder}/seg_{camera}.npy", entity)
         return
 
     def save_data(self, scene_idx, objects_list):
@@ -596,7 +601,8 @@ class TabletopScenes(object):
         else:
             os.makedirs(out_folder)
             print(f'created folder {out_folder}/')
-        self.render_and_save_scene(out_folder)
+        self.render_and_save_scene(out_folder,'top')
+        self.render_and_save_scene(out_folder,'front_top')
         
         obj_semantic_label = {}
         obj_aabb = {}
@@ -637,14 +643,15 @@ class TabletopScenes(object):
 
 if __name__=='__main__':
     opt = lambda : None
-    opt.nb_objects = 12 #20
-    opt.inscene_objects = 4 #5
+    opt.nb_objects = 20 #20
+    opt.inscene_objects = 8 #5
     opt.scene_type = 'line' # 'random' or 'line'
     opt.save_scene_name = 'test'
     opt.spp = 32 #64 
     opt.width = 480
     opt.height = 360
     opt.noise = False
+    opt.mess_grid = True
     opt.nb_scenes_per_set = 5
     opt.nb_frames = 5
     opt.out_folder = '/home/wooseoko/workspace/hogun/pybullet_scene_gen/TabletopTidyingUp/dataset'
@@ -663,12 +670,12 @@ if __name__=='__main__':
         
     #pre defined objects to spawn. 
     #if you want, you can get the list of objects using select_objects. (need to change urdf_ids to urdf_names)
-    spawn_objects_list = ['bowl', 'spoon', 'knife', 'blue_cup', 'book_1', 'book_2', 'book_3', 'cleanser', 'conditioner', 'doraemon_bowl', 'fork', 'green_bowl']
-    
+    spawn_objects_list = ['stapler_2', 'two_color_hammer', 'scissors', 'extra_large_clamp', 'phillips_screwdriver', 'stapler_1', 'conditioner', 'book_1', 'book_2', 'book_3', 'book_4', 'book_5', 'book_6', 'power_drill', 'plastic_pear', 'cracker_box', 'blue_plate', 'blue_cup', 'cleanser', 'bowl', 'plastic_lemon', 'mug', 'square_plate_4', 'sugar_box', 'plastic_strawberry', 'medium_clamp', 'plastic_peach', 'knife', 'square_plate_2', 'fork', 'plate', 'green_cup', 'green_bowl', 'orange_cup', 'large_clamp', 'spoon', 'pink_tea_box', 'pudding_box', 'plastic_orange', 'plastic_apple', 'doraemon_plate', 'lipton_tea', 'yellow_bowl', 'grey_plate', 'gelatin_box', 'blue_tea_box', 'flat_screwdriver', 'mini_claw_hammer_1', 'shampoo', 'glue_1', 'glue_2', 'small_clamp', 'square_plate_3', 'doraemon_bowl', 'square_plate_1', 'round_plate_1', 'round_plate_3', 'round_plate_2', 'round_plate_4', 'plastic_banana', 'yellow_cup']
     ts = TabletopScenes(opt)
     for n_set in range(opt.nb_randomset): # line, circle -> random set, template -> set of objects in the template.
-        ts.spawn_objects(spawn_objects_list) # add random select or template load
         # urdf_selected = ts.select_objects(opt.nb_objects)
+        spawn_list = np.random.choice(spawn_objects_list, opt.nb_objects, replace=False)
+        ts.spawn_objects(spawn_list) # add random select or template load
         for i in range(opt.num_traj):
             # TODO : change this part##################
             # exist_trajs = ~~

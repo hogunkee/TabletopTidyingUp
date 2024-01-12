@@ -75,11 +75,20 @@ def get_init_euler():
         init_euler['ycb-%d'%y] = ycb_init_euler[y]
     return init_euler
 
+def get_random_pos_from_grid():
+    x = np.linspace(-0.3, 0.3, 4)
+    y = np.linspace(-0.4, 0.4, 6)
+    z = np.linspace(0.7, 0.8, 2)
+    pos = (np.random.choice(x), np.random.choice(y), np.random.choice(z))
+    return pos
+
 def generate_scene_random(num_objects):
     positions = []
     rotations = []
     for i in range(num_objects):
-        pos, rot = get_random_pos_orn([0,0,0,1])
+        _, rot = get_random_pos_orn([0,0,0,1])
+        pos = get_random_pos_from_grid()
+        
         positions.append(pos)
         rotations.append(rot)
 

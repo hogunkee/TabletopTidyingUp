@@ -1,4 +1,4 @@
-git clone -b wooseoko --recursive https://github.com/hogunkee/TabletopTidyingUp.git
+git clone --recursive https://github.com/hogunkee/TabletopTidyingUp.git
 
 python 3.8, ubuntu 20.04 (or 18.04)
 
