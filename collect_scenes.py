@@ -111,7 +111,7 @@ class TabletopScenes(object):
         self.threshold = {'pose': 0.07,
                           'rotation': 0.15,
                           'linear': 0.003,
-                          'angular': 0.03}
+                          'angular': 0.03} # angular : 0.003 (too tight to random collect)
         self.pre_selected_objects = []
         self.current_pybullet_ids = []
         self.objects_list = {}
@@ -529,7 +529,8 @@ class TabletopScenes(object):
                     obj_to_reset.add(obj2)
                 obj_to_reset = obj_to_reset - set([move_obj_id]) - set([1]) # table id
                 for reset_obj_id in obj_to_reset:
-                    p.resetBasePositionAndOrientation(reset_obj_id, pos_saved[reset_obj_id], rot_saved[reset_obj_id])
+                    if reset_obj_id in selected_objects:
+                        p.resetBasePositionAndOrientation(reset_obj_id, pos_saved[reset_obj_id], rot_saved[reset_obj_id])
             else:
                 place_feasible = True
                 pos, rot = p.getBasePositionAndOrientation(move_obj_id)
@@ -585,7 +586,7 @@ class TabletopScenes(object):
         )
         entity = np.array(entity_id)
         entity = entity.reshape([int(self.opt.height), int(self.opt.width), -1])[:, :, 0]
-        entity = entity - 1
+        entity = entity - 2
         entity = np.flip(entity, axis = 0)
         entity[np.isinf(entity)] = -1
         entity[entity>self.opt.nb_objects + 50] = -1
@@ -643,20 +644,19 @@ class TabletopScenes(object):
 
 if __name__=='__main__':
     opt = lambda : None
-    opt.nb_objects = 20 #20
-    opt.inscene_objects = 8 #5
+    opt.nb_objects = 25 #20
+    opt.inscene_objects = 7 #5
     opt.scene_type = 'line' # 'random' or 'line'
-    opt.save_scene_name = 'test'
+    opt.save_scene_name = 'random7'
     opt.spp = 32 #64 
     opt.width = 480
     opt.height = 360
     opt.noise = False
     opt.mess_grid = True
-    opt.nb_scenes_per_set = 5
-    opt.nb_frames = 5
+    opt.nb_frames = 7
     opt.out_folder = '/home/wooseoko/workspace/hogun/pybullet_scene_gen/TabletopTidyingUp/dataset'
-    opt.nb_randomset = 5
-    opt.num_traj = 20
+    opt.nb_randomset = 20
+    opt.num_traj = 100
     opt.dataset = 'train' #'train' or 'test'
     opt.objectset = 'pybullet' #'pybullet'/'ycb'/'all'
     opt.pybullet_object_path = '/home/wooseoko/workspace/hogun/pybullet_scene_gen/TabletopTidyingUp/pybullet-URDF-models/urdf_models/models'
