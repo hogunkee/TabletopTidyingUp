@@ -12,7 +12,7 @@ opt.width = 500
 opt.height = 500 
 opt.noise = False
 opt.dataset = 'train' #'train' or 'test'
-opt.objectset = 'housecat' #'pybullet'/'ycb'/'all'
+opt.objectset = 'pybullet' #'pybullet'/'ycb'/'housecat'/'all'
 opt.pybullet_object_path = '/ssd/pybullet-URDF-models/urdf_models/models'
 opt.ycb_object_path = '/ssd/YCB_dataset'
 opt.ig_object_path = '/ssd/ig_dataset/objects'
@@ -27,10 +27,13 @@ y = np.linspace(-0.4, 0.4, 5)
 xx, yy = np.meshgrid(x, y, sparse=False)
 xx, yy = xx.reshape(-1), yy.reshape(-1)
 
+
+euler_new = {}
 eye = [0.5, 0, 1.2]
 at = [0, 0, 0]
 camera_bird = ts.set_camera_pose(eye=eye, at=at, view='bird')
-for i in range(5):
+
+for i in range(len(obj_names)//20+1):
     obj_selected = sorted(obj_names)[20 * i:20 * (i+1)]
     ts.spawn_objects(obj_selected)
 
@@ -52,7 +55,10 @@ for i in range(5):
                 roll, pitch, yaw = np.array(ts.init_euler[uid]) * np.pi / 2
             else:
                 print(uid, 'not in init_euler.')
-                roll, pitch, yaw = 0, 0, 0
+                if opt.objectset=='housecat':
+                    roll, pitch, yaw = 1, 0, 0
+                else:
+                    roll, pitch, yaw = 0, 0, 0
             rot_new = get_rotation(roll, pitch, yaw)
             p.resetBasePositionAndOrientation(obj_col_id, pos_new, rot_new)
             
@@ -61,19 +67,31 @@ for i in range(5):
                 if j%100==0:
                     count = len(os.listdir('render/'))
                     nv.ids = update_visual_objects(ts.current_pybullet_ids, "", nv.ids)
-                    #nv.render(int(opt.width), int(opt.height), int(opt.spp))
                     nv.set_camera_entity(camera_bird)
-                    nv.render_to_file(
-                        width=int(opt.width), height=int(opt.height), 
-                        samples_per_pixel=int(opt.spp),
-                        file_path=f"render/rgb_{count:05}.png"
-                    )
+                    nv.render(int(opt.width), int(opt.height), int(opt.spp))
+                    #nv.render_to_file(width=int(opt.width), height=int(opt.height), 
+                    #    samples_per_pixel=int(opt.spp), file_path=f"render/rgb_{count:05}.png")
 
-            x = input("Set new euler values or press OK to move on to the next object.\n")
+            x = input("Set new euler values.\nPress OK to move on to the next object.\nPress S to save the euler values.")
             if x.lower()=="x":
                 exit()
             elif x.lower()=="ok":
+                k = int(uid.split('-')[-1])
+                if uid not in ts.init_euler:
+                    euler_new[k] = [roll, pitch, yaw]
+                else:
+                    euler_new[k] = ts.init_euler[uid]
                 break
+            elif x.lower()=="s":
+                # save csv file #
+                with open('euler_%s_new.csv' %opt.objectset, 'w') as f:
+                    for k in euler_new:
+                        elements = [k, *euler_new[k]]
+                        elements = [str(e) for e in elements]
+                        line = '\t'.join(elements) + '\n'
+                        f.write(line)
+                f.close()
+                print('saved.')
             else:
                 if len(x.split(','))==3:
                     euler = [float(e) for e in x.split(',')]
