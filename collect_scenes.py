@@ -83,16 +83,17 @@ obj_name_to_semantic_label = {
     'two_color_hammer': 'hammer',
     'yellow_bowl': 'bowl',
     'yellow_cup': 'cup',
-    #ig_dataset
-    'watch/watch_000': 'watch',
-    'tablefork/0': 'fork', 
-    'tablefork/3': 'fork',
-    'table_knife/1': 'knife',
-    'table_knife/4': 'knife', 
-    'table_lamp/13310': 'lamp', 
-    'coffee_cup/coffee_cup_000': 'cup', 
-    'lemon/07_1': 'lemon' ,
     
+    'bottle-85_alcool': 'bottle',
+    'bottle-nivea': 'bottle', 
+    'can-fanta': 'can', 
+    'can-redbull': 'can', 
+    'cup-grey_handle': 'cup', 
+    'cup-new_york': 'cup', 
+    'cup-stanford': 'cup', 
+    'remote-black': 'remote', 
+    'remote-toy': 'remote', 
+    'teapot-blue_floral': 'teapot',
 }
 
 class TabletopScenes(object):
@@ -267,21 +268,27 @@ class TabletopScenes(object):
         ycb_object_path = self.opt.ycb_object_path
         ycb_object_names = sorted([m for m in os.listdir(ycb_object_path) \
                             if os.path.isdir(os.path.join(ycb_object_path, m))])
+        exclusion_list = ['047_plastic_nut', '063-b_marbles', '063-c_marbles', '063-f_marbles', '072-g_toy_airplane']
+        for eo in exclusion_list:
+            if eo in ycb_object_names:
+                ycb_object_names.remove(eo)
         ig_object_path = self.opt.ig_object_path
         ig_object_names = []
         for m1 in os.listdir(ig_object_path):
             for m2 in os.listdir(os.path.join(ig_object_path, m1)):
                 ig_object_names.append(os.path.join(m1, m2))
-        #ig_object_names = sorted([m for m in os.listdir(ig_object_path) \
-        #                    if os.path.isdir(os.path.join(ig_object_path, m))])
-        exclusion_list = ['047_plastic_nut', '063-b_marbles', '063-c_marbles', '063-f_marbles', '072-g_toy_airplane']
-        for eo in exclusion_list:
-            if eo in ycb_object_names:
-                ycb_object_names.remove(eo)
+        housecat_object_path = self.opt.housecat_object_path
+        housecat_categories = [h for h in os.listdir(housecat_object_path) if os.path.isdir(os.path.join(housecat_object_path, h)) and not h in ['bg', 'collision']]
+        housecat_object_names = []
+        for m1 in housecat_categories:
+            obj_model_list = [h for h in os.listdir(os.path.join(housecat_object_path, m1)) if h.endswith('.urdf')]
+            for m2 in obj_model_list:
+                housecat_object_names.append(m2.split('.urdf')[0])
 
         pybullet_ids = ['pybullet-%d'%p for p in range(len(pybullet_object_names))]
         ycb_ids = ['ycb-%d'%y for y in range(len(ycb_object_names))]
         ig_ids = ['ig-%d'%i for i in range(len(ig_object_names))]
+        housecat_ids = ['housecat-%d'%h for h in range(len(housecat_object_names))]
         # urdf_id_names
         # key: {object_type}-{index} - e.g., 'pybullet-0'
         # value: {object_name} - e.g., 'black_marker'
@@ -300,10 +307,15 @@ class TabletopScenes(object):
                 ig_ids,
                 ig_object_names
                 ))
+        elif objectset=='housecat':
+            urdf_id_names = dict(zip(
+                housecat_ids,
+                housecat_object_names
+                ))
         elif objectset=='all':
             urdf_id_names = dict(zip(
-                pybullet_ids + ycb_ids + ig_ids,
-                pybullet_object_names + ycb_object_names + ig_object_names
+                pybullet_ids + ycb_ids + housecat_ids,
+                pybullet_object_names + ycb_object_names + housecat_object_names
                 ))
 
         print('-'*60)
@@ -339,6 +351,8 @@ class TabletopScenes(object):
                     urdf_path = os.path.join(self.opt.ycb_object_path, obj, 'poisson', 'model.urdf')
             elif object_type=='ig':
                 urdf_path = os.path.join(self.opt.ig_object_path, obj, obj.split('/')[-1]+'.urdf')
+            elif object_type=='housecat':
+                urdf_path = os.path.join(self.opt.housecat_object_path, obj.split('-')[0], obj+'.urdf')
 
             roll, pitch, yaw = 0, 0, 0
             if urdf_id in self.init_euler:
@@ -683,10 +697,11 @@ if __name__=='__main__':
     opt.nb_randomset = 5
     opt.num_traj = 20
     opt.dataset = 'train' #'train' or 'test'
-    opt.objectset = 'ig' # 'pybullet' #'pybullet'/'ycb'/'all'
+    opt.objectset = 'housecat' # 'pybullet' #'pybullet'/'ycb'/ 'housecat'/ 'all'
     opt.pybullet_object_path = '/ssd/pybullet-URDF-models/urdf_models/models'
     opt.ycb_object_path = '/ssd/YCB_dataset'
     opt.ig_object_path = '/ssd/ig_dataset/objects'
+    opt.housecat_object_path = '/ssd/housecat6d/obj_models_small_size_final'
     #opt.pybullet_object_path = '/home/wooseoko/workspace/hogun/pybullet_scene_gen/TabletopTidyingUp/pybullet-URDF-models/urdf_models/models'
     #opt.ycb_object_path = '/home/wooseoko/workspace/hogun/pybullet_scene_gen/TabletopTidyingUp/YCB_dataset'
 
@@ -699,8 +714,7 @@ if __name__=='__main__':
     #pre defined objects to spawn. 
     #if you want, you can get the list of objects using select_objects. (need to change urdf_ids to urdf_names)
     #spawn_objects_list = ['stapler_2', 'two_color_hammer', 'scissors', 'extra_large_clamp', 'phillips_screwdriver', 'stapler_1', 'conditioner', 'book_1', 'book_2', 'book_3', 'book_4', 'book_5', 'book_6', 'power_drill', 'plastic_pear', 'cracker_box', 'blue_plate', 'blue_cup', 'cleanser', 'bowl', 'plastic_lemon', 'mug', 'square_plate_4', 'sugar_box', 'plastic_strawberry', 'medium_clamp', 'plastic_peach', 'knife', 'square_plate_2', 'fork', 'plate', 'green_cup', 'green_bowl', 'orange_cup', 'large_clamp', 'spoon', 'pink_tea_box', 'pudding_box', 'plastic_orange', 'plastic_apple', 'doraemon_plate', 'lipton_tea', 'yellow_bowl', 'grey_plate', 'gelatin_box', 'blue_tea_box', 'flat_screwdriver', 'mini_claw_hammer_1', 'shampoo', 'glue_1', 'glue_2', 'small_clamp', 'square_plate_3', 'doraemon_bowl', 'square_plate_1', 'round_plate_1', 'round_plate_3', 'round_plate_2', 'round_plate_4', 'plastic_banana', 'yellow_cup']
-    spawn_objects_list = ['watch/watch_000', 'tablefork/0', 'tablefork/3', 'table_knife/1',
-            'table_knife/4', 'table_lamp/13310', 'coffee_cup/coffee_cup_000', 'lemon/07_1'] 
+    spawn_objects_list = ['bottle-85_alcool', 'bottle-nivea', 'can-fanta', 'can-redbull', 'cup-grey_handle', 'cup-new_york', 'cup-stanford', 'remote-black', 'remote-toy', 'teapot-blue_floral']
     ts = TabletopScenes(opt)
     for n_set in range(opt.nb_randomset): # line, circle -> random set, template -> set of objects in the template.
         # urdf_selected = ts.select_objects(opt.nb_objects)

@@ -65,14 +65,23 @@ def get_ycb_init_euler():
     init_euler = {}
     return init_euler
 
+def get_housecat_init_euler():
+    init_euler = {}
+    for i in range(194):
+        init_euler[i] = [1, 0, 0]
+    return init_euler
+
 def get_init_euler():
     init_euler = {}
     pybullet_init_euler = get_pybullet_init_euler()
     ycb_init_euler = get_ycb_init_euler()
+    housecat_init_euler = get_housecat_init_euler()
     for p in pybullet_init_euler:
         init_euler['pybullet-%d'%p] = pybullet_init_euler[p]
     for y in ycb_init_euler:
         init_euler['ycb-%d'%y] = ycb_init_euler[y]
+    for h in housecat_init_euler:
+        init_euler['housecat-%d'%h] = housecat_init_euler[h]
     return init_euler
 
 def get_random_pos_from_grid():

@@ -12,10 +12,11 @@ opt.width = 500
 opt.height = 500 
 opt.noise = False
 opt.dataset = 'train' #'train' or 'test'
-opt.objectset = 'ig' #'pybullet'/'ycb'/'all'
+opt.objectset = 'housecat' #'pybullet'/'ycb'/'all'
 opt.pybullet_object_path = '/ssd/pybullet-URDF-models/urdf_models/models'
 opt.ycb_object_path = '/ssd/YCB_dataset'
 opt.ig_object_path = '/ssd/ig_dataset/objects'
+opt.housecat_object_path = '/ssd/housecat6d/obj_models_small_size_final'
 
 ts = TabletopScenes(opt)
 urdf_ids = list(ts.urdf_id_names.keys())
@@ -45,7 +46,7 @@ for i in range(5):
         object_type = uid.split('-')[0]
         while True:
             #pos_new = [0, 0, 0.7]
-            pos_new = [xx[idx], yy[idx], 0.7]
+            pos_new = [xx[idx], yy[idx], 0.8]
             if uid in ts.init_euler:
                 print('init euler:', ts.init_euler[uid])
                 roll, pitch, yaw = np.array(ts.init_euler[uid]) * np.pi / 2
@@ -57,7 +58,7 @@ for i in range(5):
             
             for j in range(500):
                 p.stepSimulation()
-                if j%50==0:
+                if j%100==0:
                     count = len(os.listdir('render/'))
                     nv.ids = update_visual_objects(ts.current_pybullet_ids, "", nv.ids)
                     #nv.render(int(opt.width), int(opt.height), int(opt.spp))

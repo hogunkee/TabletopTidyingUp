@@ -1,3 +1,5 @@
 __pycache__/
 pyb_env/
 dataset/
+.vscode/
+render/
