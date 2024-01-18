@@ -265,6 +265,8 @@ class TabletopScenes(object):
         pybullet_object_path = self.opt.pybullet_object_path
         pybullet_object_names = sorted([m for m in os.listdir(pybullet_object_path) \
                             if os.path.isdir(os.path.join(pybullet_object_path, m))])
+        if '__pycache__' in pybullet_object_names:
+            pybullet_object_names.remove('__pycache__')
         ycb_object_path = self.opt.ycb_object_path
         ycb_object_names = sorted([m for m in os.listdir(ycb_object_path) \
                             if os.path.isdir(os.path.join(ycb_object_path, m))])

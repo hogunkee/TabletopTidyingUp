@@ -13,10 +13,14 @@ opt.height = 500
 opt.noise = False
 opt.dataset = 'train' #'train' or 'test'
 opt.objectset = 'pybullet' #'pybullet'/'ycb'/'housecat'/'all'
-opt.pybullet_object_path = '/ssd/pybullet-URDF-models/urdf_models/models'
-opt.ycb_object_path = '/ssd/YCB_dataset'
-opt.ig_object_path = '/ssd/ig_dataset/objects'
-opt.housecat_object_path = '/ssd/housecat6d/obj_models_small_size_final'
+# opt.pybullet_object_path = '/ssd/pybullet-URDF-models/urdf_models/models'
+# opt.ycb_object_path = '/ssd/YCB_dataset'
+# opt.ig_object_path = '/ssd/ig_dataset/objects'
+# opt.housecat_object_path = '/ssd/housecat6d/obj_models_small_size_final'
+opt.pybullet_object_path = '/home/wooseoko/workspace/hogun/pybullet_scene_gen/TabletopTidyingUp/pybullet-URDF-models/urdf_models/models'
+opt.ycb_object_path = '/home/wooseoko/workspace/hogun/pybullet_scene_gen/TabletopTidyingUp/YCB_dataset'
+opt.ig_object_path = '/home/wooseoko/workspace/hogun/pybullet_scene_gen/TabletopTidyingUp/ig_dataset/objects'
+opt.housecat_object_path = '/home/wooseoko/workspace/hogun/pybullet_scene_gen/TabletopTidyingUp/housecat6d/obj_models_small_size_final'
 
 ts = TabletopScenes(opt)
 urdf_ids = list(ts.urdf_id_names.keys())
@@ -47,9 +51,10 @@ for i in range(len(obj_names)//20+1):
         object_name = obj_names[idx]
         object_type = uid.split('-')[0]
         scale = 1
+        origin_pos, origin_rot = p.getBasePositionAndOrientation(obj_col_id)
         while True:
             #pos_new = [0, 0, 0.7]
-            pos_new = [xx[idx], yy[idx], 0.8]
+            pos_new = [xx[idx], yy[idx], 0.7 + scale * 0.1]
             if uid in ts.init_euler:
                 print('init euler:', ts.init_euler[uid])
                 roll, pitch, yaw = np.array(ts.init_euler[uid]) * np.pi / 2
@@ -65,10 +70,11 @@ for i in range(len(obj_names)//20+1):
             for j in range(500):
                 p.stepSimulation()
                 if j%100==0:
-                    count = len(os.listdir('render/'))
-                    nv.ids = update_visual_objects(ts.current_pybullet_ids, "", nv.ids)
-                    nv.set_camera_entity(camera_bird)
-                    nv.render(int(opt.width), int(opt.height), int(opt.spp))
+                    pass
+                    # count = len(os.listdir('render/'))
+                    # nv.ids = update_visual_objects(ts.current_pybullet_ids, "", nv.ids)
+                    # nv.set_camera_entity(camera_bird)
+                    # nv.render(int(opt.width), int(opt.height), int(opt.spp))
                     #nv.render_to_file(width=int(opt.width), height=int(opt.height), 
                     #    samples_per_pixel=int(opt.spp), file_path=f"render/rgb_{count:05}.png")
 
@@ -83,6 +89,7 @@ for i in range(len(obj_names)//20+1):
                 else:
                     euler_new[k] = ts.init_euler[uid]
                 print('-'*40)
+                p.resetBasePositionAndOrientation(obj_col_id, origin_pos, origin_rot)
                 break
             elif x.lower()=="s":
                 # save csv file #
@@ -96,6 +103,7 @@ for i in range(len(obj_names)//20+1):
                 print('-'*40)
                 print('euler_%s_new.csv saved.'%opt.objectset)
                 print('-'*40)
+                p.resetBasePositionAndOrientation(obj_col_id, origin_pos, origin_rot)
                 break
             else:
                 if len(x.split(','))==3:
