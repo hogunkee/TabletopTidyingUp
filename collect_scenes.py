@@ -18,6 +18,7 @@ from scene_utils import update_visual_objects
 from scene_utils import remove_visual_objects, clear_scene
 
 obj_name_to_semantic_label = {
+    # pybullet-URDF-models #
     'blue_cup': 'cup',
     'blue_plate': 'plate',
     'blue_tea_box': 'tea_box',
@@ -84,6 +85,7 @@ obj_name_to_semantic_label = {
     'yellow_bowl': 'bowl',
     'yellow_cup': 'cup',
     
+    # housecat6d #
     'bottle-85_alcool': 'bottle',
     'bottle-nivea': 'bottle', 
     'can-fanta': 'can', 
@@ -200,33 +202,6 @@ class TabletopScenes(object):
         # set the plane and table        
         planeID = p.loadURDF("plane.urdf")
         table_id = p.loadURDF("table/table.urdf", basePosition=[0.0,0.0,0.0], baseOrientation=[0.0,0.0,0.7071,0.7071])
-
-
-        # Set the collision with the floor mesh
-        # first lets get the vertices 
-        # vertices = self.floor.get_mesh().get_vertices()
-
-        # get the position of the object
-        # pos = self.floor.get_transform().get_position()
-        # pos = [pos[0],pos[1],pos[2]]
-        # scale = self.floor.get_transform().get_scale()
-        # scale = [scale[0],scale[1],scale[2]]
-        # rot = self.floor.get_transform().get_rotation()
-        # rot = [rot[0],rot[1],rot[2],rot[3]]
-
-        # create a collision shape that is a convex hull
-        # obj_col_id = p.createCollisionShape(
-        #     p.GEOM_MESH,
-        #     vertices = vertices,
-        #     meshScale = scale,
-        # )
-
-        # create a body without mass so it is static
-        # p.createMultiBody(
-        #     baseCollisionShapeIndex = obj_col_id,
-        #     basePosition = pos,
-        #     baseOrientation= rot,
-        # )    
         return
 
     def set_grid(self):
@@ -237,7 +212,6 @@ class TabletopScenes(object):
         self.yy = yy.reshape(-1)
 
     def clear(self):
-
         pybullet_ids = copy.deepcopy(self.current_pybullet_ids)
         # remove spawned objects before #
         remove_visual_objects(nv.ids)
@@ -254,7 +228,6 @@ class TabletopScenes(object):
         self.set_front_top_view_camera()
         self.initialize_nvisii_scene()
         self.initialize_pybullet_scene()
-        
 
     def close(self):
         nv.deinitialize()
@@ -325,14 +298,8 @@ class TabletopScenes(object):
         print('-'*40)
         return urdf_id_names
 
-    # def select_objects(self, nb_objects):
-    #     nb_spawn = min(nb_objects, len(self.urdf_id_names))
-    #     urdf_selected = np.random.choice(list(self.urdf_id_names.values()), nb_spawn, replace=False)
-    #     return urdf_selected
-
     def spawn_objects(self, spawn_obj_list):
         self.spawned_objects = copy.deepcopy(spawn_obj_list)
-
         urdf_ids = list(self.urdf_id_names.keys())
         obj_names = list(self.urdf_id_names.values())
 
@@ -342,7 +309,6 @@ class TabletopScenes(object):
         for obj in spawn_obj_list:
             urdf_id = urdf_ids[obj_names.index(obj)]
             object_type = urdf_id.split('-')[0]
-            #(object_name, object_type) = self.urdf_id_names[urdf_id]
             if object_type=='pybullet':
                 urdf_path = os.path.join(self.opt.pybullet_object_path, obj, 'model.urdf')
             elif object_type=='ycb':
@@ -382,7 +348,7 @@ class TabletopScenes(object):
         pybullet_ids = self.current_pybullet_ids
         obj_id_to_remove = pybullet_ids[spawn_idx]
 
-        # remove obj_id_to_remove #
+        # remove the existing object
         self.base_rot.pop(obj_id_to_remove)
         self.base_size.pop(obj_id_to_remove)
         self.objects_list.pop(int(obj_id_to_remove))
