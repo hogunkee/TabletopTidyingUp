@@ -3,3 +3,7 @@ pyb_env/
 dataset/
 .vscode/
 render/
+ig_dataset/
+housecat6d/
+YCB_dataset/
+
