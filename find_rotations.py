@@ -72,6 +72,7 @@ for i in range(len(obj_names)//20+1):
                     #nv.render_to_file(width=int(opt.width), height=int(opt.height), 
                     #    samples_per_pixel=int(opt.spp), file_path=f"render/rgb_{count:05}.png")
 
+            # Format: roll, pitch, yaw, scale #
             x = input("Set new euler values.\nPress OK to move on to the next object.\nPress S to save the euler values.")
             if x.lower()=="x":
                 exit()
@@ -95,7 +96,12 @@ for i in range(len(obj_names)//20+1):
             else:
                 if len(x.split(','))==3:
                     euler = [float(e) for e in x.split(',')]
-                    ts.init_euler[uid] = euler
+                elif len(x.split(','))==4:
+                    values = [float(e) for e in x.split(',')]
+                    euler = values[:3]
+                    scale = values[3]
+                    ts.respawn_object(object_name)
+                ts.init_euler[uid] = euler
                 continue
             
     ts.clear()

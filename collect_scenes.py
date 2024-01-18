@@ -338,7 +338,7 @@ class TabletopScenes(object):
         self.base_rot = {}
         self.base_size = {}
         for obj in spawn_obj_list:
-            urdf_id =  urdf_ids[obj_names.index(obj)]
+            urdf_id = urdf_ids[obj_names.index(obj)]
             object_type = urdf_id.split('-')[0]
             #(object_name, object_type) = self.urdf_id_names[urdf_id]
             if object_type=='pybullet':
@@ -371,6 +371,56 @@ class TabletopScenes(object):
             pybullet_ids.append(obj_id)
             self.spawn_obj_num += 1
             self.objects_list[int(obj_id)] = obj
+
+        nv.ids = update_visual_objects(pybullet_ids, "")
+        self.current_pybullet_ids = copy.deepcopy(pybullet_ids)
+
+    def respawn_object(self, obj, scale=1.):
+        self.spawned_objects = copy.deepcopy(spawn_obj_list)
+        spawn_idx = self.spawned_objects.index(obj)
+        pybullet_ids = self.current_pybullet_ids
+        obj_id_to_remove = pybullet_ids[spawn_idx]
+
+        # remove obj_id_to_remove #
+        self.base_rot.pop(obj_id_to_remove)
+        self.base_size.pop(obj_id_to_remove)
+        self.objects_list.pop(int(obj_id_to_remove))
+        p.removeBody(obj_id_to_remove)
+
+        urdf_ids = list(self.urdf_id_names.keys())
+        obj_names = list(self.urdf_id_names.values())
+
+        urdf_id = urdf_ids[obj_names.index(obj)]
+        object_type = urdf_id.split('-')[0]
+        if object_type=='pybullet':
+            urdf_path = os.path.join(self.opt.pybullet_object_path, obj, 'model.urdf')
+        elif object_type=='ycb':
+            urdf_path = os.path.join(self.opt.ycb_object_path, obj, 'poisson', 'model.urdf')
+            if obj.startswith('022_windex_bottle') or obj.startswith('023_wine_glass') or obj.startswith('049_'):
+                urdf_path = os.path.join(self.opt.ycb_object_path, obj, 'tsdf', 'model.urdf')
+            else:
+                urdf_path = os.path.join(self.opt.ycb_object_path, obj, 'poisson', 'model.urdf')
+        elif object_type=='ig':
+            urdf_path = os.path.join(self.opt.ig_object_path, obj, obj.split('/')[-1]+'.urdf')
+        elif object_type=='housecat':
+            urdf_path = os.path.join(self.opt.housecat_object_path, obj.split('-')[0], obj+'.urdf')
+
+        roll, pitch, yaw = 0, 0, 0
+        if urdf_id in self.init_euler:
+            roll, pitch, yaw = np.array(self.init_euler[urdf_id]) * np.pi / 2
+        rot = get_rotation(roll, pitch, yaw)
+        obj_id = p.loadURDF(urdf_path, [self.xx[self.spawn_obj_num], self.yy[self.spawn_obj_num], 0.15], rot, globalScaling=1.) #5.
+        for i in range(100):
+            p.stepSimulation()
+        pos,orn = p.getBasePositionAndOrientation(obj_id)
+        self.base_rot[obj_id] = orn
+        
+        posa, posb = p.getAABB(obj_id)
+        # to check object partially on other objects
+        self.base_size[obj_id] = (np.abs(posa[0] - posb[0]), np.abs(posa[1] - posb[1]), np.abs(posa[2] - posb[2])) 
+        
+        pybullet_ids[spawn_idx] = obj_id
+        self.objects_list[int(obj_id)] = obj
 
         nv.ids = update_visual_objects(pybullet_ids, "")
         self.current_pybullet_ids = copy.deepcopy(pybullet_ids)
