@@ -45,8 +45,8 @@ for i in range(len(obj_names)//20+1):
 
         uid = urdf_ids[idx]
         object_name = obj_names[idx]
-        #object_name = ts.urdf_id_names[uid]
         object_type = uid.split('-')[0]
+        scale = 1
         while True:
             #pos_new = [0, 0, 0.7]
             pos_new = [xx[idx], yy[idx], 0.8]
@@ -54,7 +54,7 @@ for i in range(len(obj_names)//20+1):
                 print('init euler:', ts.init_euler[uid])
                 roll, pitch, yaw = np.array(ts.init_euler[uid]) * np.pi / 2
             else:
-                print(uid, 'not in init_euler.')
+                print(uid, 'has no default euler angles.')
                 if opt.objectset=='housecat':
                     roll, pitch, yaw = 1, 0, 0
                 else:
@@ -73,11 +73,7 @@ for i in range(len(obj_names)//20+1):
                     #    samples_per_pixel=int(opt.spp), file_path=f"render/rgb_{count:05}.png")
 
             # Format: roll, pitch, yaw, scale #
-            x = input("""Set new euler values.
-                        Format: roll, pitch, yaw, scale(option)
-                        Press OK to move on to the next object.
-                        Press S to save the euler values.
-                        """)
+            x = input("Set new euler values.\n  format: roll, pitch, yaw, (scale)\nPress OK to move on to the next object.\nPress S to save the euler values.\nPress X to exit.\n")
             if x.lower()=="x":
                 exit()
             elif x.lower()=="ok":
@@ -86,17 +82,21 @@ for i in range(len(obj_names)//20+1):
                     euler_new[k] = [roll, pitch, yaw]
                 else:
                     euler_new[k] = ts.init_euler[uid]
+                print('-'*40)
                 break
             elif x.lower()=="s":
                 # save csv file #
                 with open('euler_%s_new.csv' %opt.objectset, 'w') as f:
                     for k in euler_new:
-                        elements = [k, *euler_new[k]]
+                        elements = [k, *euler_new[k], scale]
                         elements = [str(e) for e in elements]
                         line = '\t'.join(elements) + '\n'
                         f.write(line)
                 f.close()
-                print('saved.')
+                print('-'*40)
+                print('euler_%s_new.csv saved.'%opt.objectset)
+                print('-'*40)
+                break
             else:
                 if len(x.split(','))==3:
                     euler = [float(e) for e in x.split(',')]
@@ -105,7 +105,7 @@ for i in range(len(obj_names)//20+1):
                     euler = values[:3]
                     scale = values[3]
                     remove_visual_objects(nv.ids)
-                    ts.respawn_object(object_name)
+                    ts.respawn_object(object_name, scale) 
                 ts.init_euler[uid] = euler
                 continue
             

@@ -318,9 +318,9 @@ class TabletopScenes(object):
                 pybullet_object_names + ycb_object_names + housecat_object_names
                 ))
 
-        print('-'*60)
+        print('-'*40)
         print(len(urdf_id_names), 'objects can be loaded.')
-        print('-'*60)
+        print('-'*40)
         return urdf_id_names
 
     # def select_objects(self, nb_objects):
