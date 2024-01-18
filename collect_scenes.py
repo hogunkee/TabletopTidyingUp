@@ -443,6 +443,27 @@ class TabletopScenes(object):
                 else: # TODO: set object rotation as template's rotation or random rotation
                     rot = quaternion_multiply(init_rotations[idx], self.base_rot[obj_id]) if random else init_rotations[idx]
 
+                move_object(obj_id, pos_sel, rot)        
+                if idx==0:
+                    continue
+                pre_obj_id = selected_objects[idx-1]
+                #pre_obj_id = copy.deepcopy(obj_id)
+                objects_pair = {
+                        pre_obj_id: self.objects_list[pre_obj_id],
+                        obj_id: self.objects_list[obj_id]
+                        }
+                distance = cal_distance(object_pair)
+                print(distance)
+
+            # place new objects #
+            set_base_rot = True if init_rotations == [] else False               
+            for idx, obj_id in enumerate(selected_objects):
+                pos_sel = init_positions[idx]
+                if set_base_rot:
+                    rot = self.base_rot[obj_id]
+                    init_rotations.append(rot)
+                else: # TODO: set object rotation as template's rotation or random rotation
+                    rot = quaternion_multiply(init_rotations[idx], self.base_rot[obj_id]) if random else init_rotations[idx]
 
                 move_object(obj_id, pos_sel, rot)        
                         
@@ -666,7 +687,7 @@ class TabletopScenes(object):
         obj_state = {}
         n_obj = {}
         new_objects_list = {}
-        for id,obj_name in objects_list.items():
+        for id, obj_name in objects_list.items():
             id = int(id)
             new_objects_list[id] = obj_name
             n = n_obj.get(obj_name_to_semantic_label[obj_name], 0)
