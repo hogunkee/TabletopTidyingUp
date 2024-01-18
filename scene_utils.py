@@ -7,72 +7,48 @@ from transform_utils import euler2quat
 
 def get_pybullet_init_euler():
     init_euler = {}
-    init_euler[2] = [0, 0, 1]
-    init_euler[4] = [0, 0, -1]
-    init_euler[7] = [1, 0, 0]
-    init_euler[8] = [1, 0, 0]
-    init_euler[9] = [1, 0, 0]
-    init_euler[10] = [1, 0, -1]
-    init_euler[11] = [1, 0, -1]
-    init_euler[12] = [0, 0, -1]
-    init_euler[13] = [0, 0, 1]
-    init_euler[14] = [0, 0, -1]
-    init_euler[17] = [1, 0, -1]
-    init_euler[20] = [0, 0, -1]
-    init_euler[22] = [0, 0, -1]
-    init_euler[24] = [0, 0, 1]
-    init_euler[25] = [0, 0, -1]
-    init_euler[26] = [0, 0, 2]
-    init_euler[27] = [0, 0, 2]
-    init_euler[28] = [0, 0, 2]
-    init_euler[30] = [1, 0, -1]
-    init_euler[31] = [1, 0, -1]
-    init_euler[33] = [0, 0, 1]
-    init_euler[36] = [0, 0, 2]
-    init_euler[37] = [0, 0, 2]
-    init_euler[38] = [1, 0, -1]
-    init_euler[39] = [0, 0, 1]
-    init_euler[40] = [0, 0, 2]
-    init_euler[42] = [0, 0, -1]
-    init_euler[43] = [0, 0, 1]
-    init_euler[44] = [1, 0, -1]
-    init_euler[46] = [0, 0, 2]
-    init_euler[48] = [0, 0, -1]
-    init_euler[54] = [0, 0, 1]
-    init_euler[58] = [1, 0, 0]
-    init_euler[60] = [0, 0, -1]
-    init_euler[61] = [0, 0, -1]
-    init_euler[65] = [0, 0, 2]
-    init_euler[66] = [0, 0, 2]
-    init_euler[67] = [0, 0, 2]
-    init_euler[68] = [0, 0, 1]
-    init_euler[69] = [0, 0, -1]
-    init_euler[70] = [0, 0, -1]
-    init_euler[71] = [0, 0, 2]
-    init_euler[73] = [0, 0, 1]
-    init_euler[74] = [0, -1, -1]
-    init_euler[75] = [0, 0, 2]
-    init_euler[79] = [0, 0, 2]
-    init_euler[80] = [0, 0, 1]
-    init_euler[81] = [0, 0, -1]
-    init_euler[82] = [0, 0, 1]
-    init_euler[83] = [0, 0, 1]
-    init_euler[90] = [0, 0, 2]
-    init_euler[93] = [0, 0, 1]
+    if os.path.exists('euler_pybullet.csv'):
+        with open('euler_pybullet.csv', 'r') as f:
+            lines = f.readlines()
+        for line in lines:
+            e = line.replace('\n', '').split('\t')
+            init_euler[int(e[0])] = [float(e[1]), float(e[2]), float(e[3])]
     return init_euler
 
 def get_ycb_init_euler():
     init_euler = {}
+    if os.path.exists('euler_ycb.csv'):
+        with open('euler_ycb.csv', 'r') as f:
+            lines = f.readlines()
+        for line in lines:
+            e = line.replace('\n', '').split('\t')
+            init_euler[int(e[0])] = [float(e[1]), float(e[2]), float(e[3])]
+    return init_euler
+
+def get_housecat_init_euler():
+    init_euler = {}
+    if os.path.exists('euler_housecat.csv'):
+        with open('euler_housecat.csv', 'r') as f:
+            lines = f.readlines()
+        for line in lines:
+            e = line.replace('\n', '').split('\t')
+            init_euler[int(e[0])] = [float(e[1]), float(e[2]), float(e[3])]
+    for i in range(194):
+        if i not in init_euler:
+            init_euler[i] = [1, 0, 0]
     return init_euler
 
 def get_init_euler():
     init_euler = {}
     pybullet_init_euler = get_pybullet_init_euler()
     ycb_init_euler = get_ycb_init_euler()
+    housecat_init_euler = get_housecat_init_euler()
     for p in pybullet_init_euler:
         init_euler['pybullet-%d'%p] = pybullet_init_euler[p]
     for y in ycb_init_euler:
         init_euler['ycb-%d'%y] = ycb_init_euler[y]
+    for h in housecat_init_euler:
+        init_euler['housecat-%d'%h] = housecat_init_euler[h]
     return init_euler
 
 def get_random_pos_from_grid():
