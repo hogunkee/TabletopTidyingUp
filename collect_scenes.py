@@ -408,7 +408,7 @@ class TabletopScenes(object):
         if urdf_id in self.init_euler:
             roll, pitch, yaw = np.array(self.init_euler[urdf_id]) * np.pi / 2
         rot = get_rotation(roll, pitch, yaw)
-        obj_id = p.loadURDF(urdf_path, [self.xx[self.spawn_obj_num], self.yy[self.spawn_obj_num], 0.15], rot, globalScaling=1.) #5.
+        obj_id = p.loadURDF(urdf_path, [self.xx[self.spawn_obj_num], self.yy[self.spawn_obj_num], 0.15], rot, globalScaling=scale)
         for i in range(100):
             p.stepSimulation()
         pos,orn = p.getBasePositionAndOrientation(obj_id)

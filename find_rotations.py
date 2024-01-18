@@ -2,7 +2,7 @@ import os
 import numpy as np
 import pybullet as p 
 import nvisii as nv
-from scene_utils import update_visual_objects, get_rotation
+from scene_utils import update_visual_objects, remove_visual_objects, get_rotation
 from collect_scenes import TabletopScenes
 
 opt = lambda : None
@@ -73,7 +73,11 @@ for i in range(len(obj_names)//20+1):
                     #    samples_per_pixel=int(opt.spp), file_path=f"render/rgb_{count:05}.png")
 
             # Format: roll, pitch, yaw, scale #
-            x = input("Set new euler values.\nPress OK to move on to the next object.\nPress S to save the euler values.")
+            x = input("""Set new euler values.
+                        Format: roll, pitch, yaw, scale(option)
+                        Press OK to move on to the next object.
+                        Press S to save the euler values.
+                        """)
             if x.lower()=="x":
                 exit()
             elif x.lower()=="ok":
@@ -100,6 +104,7 @@ for i in range(len(obj_names)//20+1):
                     values = [float(e) for e in x.split(',')]
                     euler = values[:3]
                     scale = values[3]
+                    remove_visual_objects(nv.ids)
                     ts.respawn_object(object_name)
                 ts.init_euler[uid] = euler
                 continue
