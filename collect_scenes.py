@@ -376,7 +376,6 @@ class TabletopScenes(object):
         self.current_pybullet_ids = copy.deepcopy(pybullet_ids)
 
     def respawn_object(self, obj, scale=1.):
-        self.spawned_objects = copy.deepcopy(spawn_obj_list)
         spawn_idx = self.spawned_objects.index(obj)
         pybullet_ids = self.current_pybullet_ids
         obj_id_to_remove = pybullet_ids[spawn_idx]
