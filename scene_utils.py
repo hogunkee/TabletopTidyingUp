@@ -77,13 +77,21 @@ def generate_scene_shape(scene_type, num_objects):
         # positions[:, 2] = z_default
         rotations = [] # TODO: add random rotations (z-axis)
     elif scene_type=='line':
-        distance_enough = False
-        while not distance_enough:
-            x1, y1 = np.array(random_pos_on_table())[:2]
-            x2, y2 = np.array(random_pos_on_table())[:2]
+        check_feasible = False
+        while not check_feasible:
+            xc, yc = np.array(random_pos_on_table())[:2]
+            x_hat = np.random.uniform(size=2) - 0.5
+            x_hat /= np.linalg.norm(x_hat)
+            x1, y1 = [xc, yc] - x_hat * 0.15 * num_objects/2
+            x2, y2 = [xc, yc] + x_hat * 0.15 * num_objects/2
+            if min(x1, x2) < -0.3 or max(x1, x2) > 0.3:
+                check_feasible = False
+                continue
+            if min(y1, y2) < -0.4 or max(y1, y2) > 0.4:
+                check_feasible = False
+                continue
+            check_feasible = True
 
-            distance_enough = (np.linalg.norm([x1 - x2, y1 - y2]) > 0.3) \
-                                and (np.linalg.norm([x1 - x2, y1 - y2]) < 0.5)
         xs = np.linspace(x1, x2, num_objects)
         ys = np.linspace(y1, y2, num_objects)
         zs = np.ones(num_objects) * z_default + np.arange(num_objects) * 0.05

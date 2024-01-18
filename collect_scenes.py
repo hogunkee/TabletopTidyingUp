@@ -444,29 +444,32 @@ class TabletopScenes(object):
                     rot = quaternion_multiply(init_rotations[idx], self.base_rot[obj_id]) if random else init_rotations[idx]
 
                 move_object(obj_id, pos_sel, rot)        
-                if idx==0:
-                    continue
-                pre_obj_id = selected_objects[idx-1]
-                #pre_obj_id = copy.deepcopy(obj_id)
-                objects_pair = {
-                        pre_obj_id: self.objects_list[pre_obj_id],
-                        obj_id: self.objects_list[obj_id]
-                        }
-                distance = cal_distance(object_pair)
-                print(distance)
 
-            # place new objects #
-            set_base_rot = True if init_rotations == [] else False               
-            for idx, obj_id in enumerate(selected_objects):
-                pos_sel = init_positions[idx]
-                if set_base_rot:
-                    rot = self.base_rot[obj_id]
-                    init_rotations.append(rot)
-                else: # TODO: set object rotation as template's rotation or random rotation
-                    rot = quaternion_multiply(init_rotations[idx], self.base_rot[obj_id]) if random else init_rotations[idx]
+                # calculate distance btw objects and repose objects
+                if self.opt.scene_type=='line':
+                    goal_dist = 0.02
+                    if idx==0:
+                        continue
+                    pre_obj_id = selected_objects[idx-1]
+                    #pre_obj_id = copy.deepcopy(obj_id)
+                    objects_pair = {
+                            pre_obj_id: self.objects_list[pre_obj_id],
+                            obj_id: self.objects_list[obj_id]
+                            }
+                    distance = list(cal_distance(objects_pair).values())[0]
+                    if distance < 0.0001:
+                        continue
+                    # delta = dist(o1, o2) - goal_dist
+                    # x_hat := unit vector from o1 to o2
+                    # p2_new = p2 - delta * x_hat
+                    pre_pos_sel = init_positions[idx-1]
+                    x_hat = pos_sel - pre_pos_sel
+                    x_hat /= np.linalg.norm(x_hat)
+                    pos_new = pos_sel - (distance - goal_dist) * x_hat
+                    move_object(obj_id, pos_new, rot)
+                    init_positions[idx] = pos_new
+                    #print(cal_distance(objects_pair))
 
-                move_object(obj_id, pos_sel, rot)        
-                        
             self.pre_selected_objects = copy.deepcopy(selected_objects)
             init_rotations = np.array(init_rotations)
 
@@ -721,9 +724,8 @@ class TabletopScenes(object):
 if __name__=='__main__':
     opt = lambda : None
     opt.nb_objects = 8 #20 #20
-    opt.inscene_objects = 8 #5
     opt.nb_objects = 25 #20
-    opt.inscene_objects = 7 #5
+    opt.inscene_objects = 5 #7
     opt.scene_type = 'line' # 'random' or 'line'
     opt.save_scene_name = 'random7'
     opt.spp = 32 #64 
@@ -731,13 +733,13 @@ if __name__=='__main__':
     opt.height = 360
     opt.noise = False
     opt.mess_grid = True
-    opt.nb_frames = 7
+    opt.nb_frames = 5 #7
     opt.out_folder = '/ssd/ur5_tidying_data/line-shape/'
     #opt.out_folder = '/home/wooseoko/workspace/hogun/pybullet_scene_gen/TabletopTidyingUp/dataset'
     opt.nb_randomset = 20
     opt.num_traj = 100
     opt.dataset = 'train' #'train' or 'test'
-    opt.objectset = 'housecat' # 'pybullet' #'pybullet'/'ycb'/ 'housecat'/ 'all'
+    opt.objectset = 'pybullet' # 'pybullet' #'pybullet'/'ycb'/ 'housecat'/ 'all'
     opt.pybullet_object_path = '/ssd/pybullet-URDF-models/urdf_models/models'
     opt.ycb_object_path = '/ssd/YCB_dataset'
     opt.ig_object_path = '/ssd/ig_dataset/objects'
@@ -753,8 +755,8 @@ if __name__=='__main__':
         
     #pre defined objects to spawn. 
     #if you want, you can get the list of objects using select_objects. (need to change urdf_ids to urdf_names)
-    #spawn_objects_list = ['stapler_2', 'two_color_hammer', 'scissors', 'extra_large_clamp', 'phillips_screwdriver', 'stapler_1', 'conditioner', 'book_1', 'book_2', 'book_3', 'book_4', 'book_5', 'book_6', 'power_drill', 'plastic_pear', 'cracker_box', 'blue_plate', 'blue_cup', 'cleanser', 'bowl', 'plastic_lemon', 'mug', 'square_plate_4', 'sugar_box', 'plastic_strawberry', 'medium_clamp', 'plastic_peach', 'knife', 'square_plate_2', 'fork', 'plate', 'green_cup', 'green_bowl', 'orange_cup', 'large_clamp', 'spoon', 'pink_tea_box', 'pudding_box', 'plastic_orange', 'plastic_apple', 'doraemon_plate', 'lipton_tea', 'yellow_bowl', 'grey_plate', 'gelatin_box', 'blue_tea_box', 'flat_screwdriver', 'mini_claw_hammer_1', 'shampoo', 'glue_1', 'glue_2', 'small_clamp', 'square_plate_3', 'doraemon_bowl', 'square_plate_1', 'round_plate_1', 'round_plate_3', 'round_plate_2', 'round_plate_4', 'plastic_banana', 'yellow_cup']
-    spawn_objects_list = ['bottle-85_alcool', 'bottle-nivea', 'can-fanta', 'can-redbull', 'cup-grey_handle', 'cup-new_york', 'cup-stanford', 'remote-black', 'remote-toy', 'teapot-blue_floral']
+    spawn_objects_list = ['stapler_2', 'two_color_hammer', 'scissors', 'extra_large_clamp', 'phillips_screwdriver', 'stapler_1', 'conditioner', 'book_1', 'book_2', 'book_3', 'book_4', 'book_5', 'book_6', 'power_drill', 'plastic_pear', 'cracker_box', 'blue_plate', 'blue_cup', 'cleanser', 'bowl', 'plastic_lemon', 'mug', 'square_plate_4', 'sugar_box', 'plastic_strawberry', 'medium_clamp', 'plastic_peach', 'knife', 'square_plate_2', 'fork', 'plate', 'green_cup', 'green_bowl', 'orange_cup', 'large_clamp', 'spoon', 'pink_tea_box', 'pudding_box', 'plastic_orange', 'plastic_apple', 'doraemon_plate', 'lipton_tea', 'yellow_bowl', 'grey_plate', 'gelatin_box', 'blue_tea_box', 'flat_screwdriver', 'mini_claw_hammer_1', 'shampoo', 'glue_1', 'glue_2', 'small_clamp', 'square_plate_3', 'doraemon_bowl', 'square_plate_1', 'round_plate_1', 'round_plate_3', 'round_plate_2', 'round_plate_4', 'plastic_banana', 'yellow_cup']
+    #spawn_objects_list = ['bottle-85_alcool', 'bottle-nivea', 'can-fanta', 'can-redbull', 'cup-grey_handle', 'cup-new_york', 'cup-stanford', 'remote-black', 'remote-toy', 'teapot-blue_floral']
     ts = TabletopScenes(opt)
     for n_set in range(opt.nb_randomset): # line, circle -> random set, template -> set of objects in the template.
         # urdf_selected = ts.select_objects(opt.nb_objects)
@@ -773,7 +775,7 @@ if __name__=='__main__':
             while not success_placement:
                 ts.set_floor(texture_id=-1)
                 print(f'rendering scene {str(scene_id["trajectory"])}-{str(scene_id["frame"])}', end='\r')
-                success_placement = ts.arrange_objects(scene_id, random=True)
+                success_placement = ts.arrange_objects(scene_id, random=False)
                 if not success_placement:
                     continue
             scene_id['frame'] += 1
