@@ -1,5 +1,5 @@
 
-### 기본 세팅
+## 기본 세팅
 
 ---
 
@@ -9,13 +9,13 @@ python 3.8, ubuntu 20.04 (or 18.04)
 
 pip install -r requirements.txt
 
-### template collect
+## template collect
 
 ---
 
 이미지에서 마우스 클릭으로 위치 선택
 
-가능한 actions (action들은 cv2 window에서 입력해야함.)
+가능한 actions **(action들은 cv2 window에서 입력해야함.)**
 
 - a : add object
     - 추가할 object category명, rotation을 terminal에서 입력. position은 마우스 클릭한 위치
@@ -41,9 +41,9 @@ pip install -r requirements.txt
     - 시뮬레이션을 잠깐 돌림.
     - 저장할때는 모든 물체들 다 테이블에 붙어있는 상태로 만들도록 시뮬레이션 돌려서 저장.
 
-*** 마우스 클릭을 하지 않으면 이전에 마지막으로 클릭했던 마우스 위치가 남아서 물체가 선택될 수 있으니 주의! ***
+***** 마우스 클릭을 하지 않으면 이전에 마지막으로 클릭했던 마우스 위치가 남아서 물체가 선택될 수 있으니 주의! *****
 
-### template 수집시 주의사항
+## template 수집시 주의사항
 
 ---
 
