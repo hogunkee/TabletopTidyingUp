@@ -1,6 +1,5 @@
 
 ## 기본 세팅
-
 ---
 
 git clone --recursive [https://github.com/hogunkee/TabletopTidyingUp.git](https://github.com/hogunkee/TabletopTidyingUp.git)
@@ -9,8 +8,8 @@ python 3.8, ubuntu 20.04 (or 18.04)
 
 pip install -r requirements.txt
 
-## template collect
 
+## template collect
 ---
 
 이미지에서 마우스 클릭으로 위치 선택
@@ -43,8 +42,8 @@ pip install -r requirements.txt
 
 **마우스 클릭을 하지 않으면 이전에 마지막으로 클릭했던 마우스 위치가 남아서 물체가 선택될 수 있으니 주의!**
 
-## template 수집시 주의사항
 
+## template 수집시 주의사항
 ---
 
 1. 테이블에 놓여진 물체들끼리는 서로 붙어있지 않도록 수집. (실제로 manipulation할때도 붙어있으면 집기가 힘들고, scene graph도 이상하게 만들어질 확률이 높음.)
