@@ -373,7 +373,7 @@ class TemplateCollector():
             
             print('\n-------enter the action------')
             print('a : add object ')
-            print('d : delete object. if no object selected, delete last added object')
+            print('d : delete object.')
             print('s : save template')
             print('r : new scene (reset)')
             print('q : quit. go to next scene')
@@ -417,14 +417,10 @@ class TemplateCollector():
             
             elif(key == ord('d')):
                 print('\ndelete object')
-                if clicked_object is None:
-                    print('object not selected. delete last added object')
-                    if not self.spawned_objects:
-                        print('no object added')
-                        continue
-                    self.remove_added_obj(max(self.spawned_objects.keys()))
-                else:
+                if clicked_object is not None:
                     self.remove_added_obj(clicked_object)
+                else:
+                    print('no object selected')
                 
             elif(key == ord('s')):
                 print('\nsave template')
