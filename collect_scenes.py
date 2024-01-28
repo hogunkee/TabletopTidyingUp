@@ -201,7 +201,7 @@ class TabletopScenes(object):
 
         # set the plane and table        
         planeID = p.loadURDF("plane.urdf")
-        table_id = p.loadURDF("table/table.urdf", basePosition=[0.0,0.0,0.0], baseOrientation=[0.0,0.0,0.7071,0.7071])
+        table_id = p.loadURDF("table/table2.urdf", basePosition=[0.0,0.0,0.0], baseOrientation=[0.0,0.0,0.7071,0.7071])
         return
 
     def set_grid(self):
