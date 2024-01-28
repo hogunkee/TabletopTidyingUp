@@ -7,6 +7,7 @@ python 3.8, ubuntu 20.04 (or 18.04)
 
 pip install -r requirements.txt
 
+---
 
 ## template collect
 
@@ -41,6 +42,7 @@ pip install -r requirements.txt
 
 **마우스 클릭을 하지 않으면 이전에 마지막으로 클릭했던 마우스 위치가 남아서 물체가 선택될 수 있으니 주의!**
 
+---
 
 ## template 수집시 주의사항
 
