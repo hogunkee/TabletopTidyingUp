@@ -76,7 +76,7 @@ def generate_sg(obj_info):
                 else:
                     break
                 
-        print(obj.final_near)
+        
 
     relation_dict = {}
     edges = []
@@ -224,7 +224,7 @@ def generate_sg(obj_info):
                         relation.append('front')
             
             edges.append((obj1.id, obj2.id, (relation)))
-    print(edges)
+    
     return refine_sg(edges)
 
 
@@ -251,7 +251,7 @@ def refine_sg(sg):
                     if pair1[1] == pair2[0] and (pair1[0], pair2[1]) in pairs:
                         remove_pair_list.append((pair1[0],pair2[1]))
         rel_pairs[rel] = [pair for pair in pairs if pair not in remove_pair_list]
-    print(rel_pairs)
+    
     for rel, pairs in rel_pairs.items():
         if ''.join(rel) in ['leftbehind', 'behindleft']:
             refined_sg['leftbehind'] = pairs

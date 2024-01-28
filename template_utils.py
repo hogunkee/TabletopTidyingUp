@@ -4,74 +4,14 @@ import json
 import cv2
 from gen_sg import generate_sg
 
-obj_name_to_semantic_label = {
-    'blue_cup': 'cup',
-    'blue_plate': 'plate',
-    'blue_tea_box': 'tea_box',
-    'book_1': 'book',
-    'book_2': 'book',
-    'book_3': 'book',
-    'book_4': 'book',
-    'book_5': 'book',
-    'book_6': 'book',
-    'book_holder_2': 'book_holder',
-    'book_holder_3': 'book_holder',
-    'bowl': 'bowl',
-    'cleanser': 'cleanser',
-    'clear_box': 'basket',
-    'clear_box_1': 'basket',
-    'conditioner': 'conditioner',
-    'cracker_box': 'cracker_box',
-    'doraemon_bowl': 'bowl',
-    'doraemon_plate': 'tray',
-    'extra_large_clamp': 'clamp',
-    'flat_screwdriver': 'screwdriver',
-    'fork': 'fork',
-    'gelatin_box': 'box',
-    'glue_1': 'glue',
-    'glue_2': 'glue',
-    'green_bowl': 'bowl',
-    'green_cup': 'cup',
-    'grey_plate': 'plate',
-    'knife': 'knife',
-    'large_clamp': 'clamp',
-    'lipton_tea': 'tea_box',
-    'medium_clamp': 'clamp',
-    'mini_claw_hammer_1': 'hammer',
-    'mug': 'mug',
-    'orange_cup': 'cup',
-    'phillips_screwdriver': 'screwdriver',
-    'pink_tea_box': 'tea_box',
-    'plastic_apple': 'apple',
-    'plastic_banana': 'banana',
-    'plastic_lemon': 'lemon',
-    'plastic_orange': 'orange',
-    'plastic_peach': 'peach',
-    'plastic_pear': 'pear',
-    'plastic_strawberry': 'strawberry',
-    'plate': 'plate',
-    'power_drill': 'drill',
-    'pudding_box': 'box',
-    'round_plate_1': 'plate',
-    'round_plate_2': 'plate',
-    'round_plate_3': 'plate',
-    'round_plate_4': 'plate',
-    'scissors': 'scissors',
-    'shampoo': 'shampoo',
-    'small_clamp': 'clamp',
-    'spoon': 'spoon',
-    'square_plate_1': 'square_plate',
-    'square_plate_2': 'square_plate',
-    'square_plate_3': 'square_plate',
-    'square_plate_4': 'square_plate',
-    'stapler_1': 'stapler',
-    'stapler_2': 'stapler',
-    'sugar_box': 'box',
-    'two_color_hammer': 'hammer',
-    'yellow_bowl': 'bowl',
-    'yellow_cup': 'cup'
-    
-}
+def camera_top_view(w,h):   
+    fov = 60
+    aspect = w/h
+    near = 0.02
+    far = 2
+    view_matrix = p.computeViewMatrix([0.0, 0.0, 1.5], [0, 0, 0.3], [-1, 0, 0])
+    projection_matrix = p.computeProjectionMatrixFOV(fov, aspect, near, far)
+    return view_matrix, projection_matrix
 
 def save_data(folder_name, camera_parameters, objects_list):
     """Save data to a file."""
@@ -192,5 +132,4 @@ def quaternion_multiply(quaternion1, quaternion0):
     
 def random_object():
     return np.random.choice(list(obj_name_to_semantic_label.keys()))
-
 
