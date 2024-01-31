@@ -18,6 +18,6 @@ with open('categories_dict.txt', 'w') as g:
     for k in sorted(category2obj.keys()):
         g.writelines("\t'%s': "%k)
         g.writelines(str(category2obj[k]))
-        g.writelines('\n')
+        g.writelines(',\n')
     g.writelines("}")
 
