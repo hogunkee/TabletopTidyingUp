@@ -16,8 +16,8 @@ def get_object_categories():
 
 def get_pybullet_init_euler():
     init_euler = {}
-    if os.path.exists('euler_pybullet.csv'):
-        with open('euler_pybullet.csv', 'r') as f:
+    if os.path.exists('euler_pybullet_new.csv'):
+        with open('euler_pybullet_new.csv', 'r') as f:
             lines = f.readlines()
         for line in lines:
             e = line.replace('\n', '').split(',')

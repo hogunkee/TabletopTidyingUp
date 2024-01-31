@@ -25,6 +25,8 @@ opt.housecat_object_path = '/home/wooseoko/workspace/hogun/pybullet_scene_gen/Ta
 ts = TabletopScenes(opt)
 urdf_ids = list(ts.urdf_id_names.keys())
 obj_names = list(ts.urdf_id_names.values())
+obj_sizes = ['medium'] * len(obj_names)
+objs = list(zip(obj_names, obj_sizes))
 
 x = np.linspace(-0.3, 0.3, 5)
 y = np.linspace(-0.4, 0.4, 5)
@@ -38,7 +40,7 @@ at = [0, 0, 0]
 camera_bird = ts.set_camera_pose(eye=eye, at=at, view='bird')
 
 for i in range(len(obj_names)//20+1):
-    obj_selected = sorted(obj_names)[20 * i:20 * (i+1)]
+    obj_selected = sorted(objs)[20 * i:20 * (i+1)]
     ts.spawn_objects(obj_selected)
 
     for idx, obj_col_id in enumerate(ts.current_pybullet_ids):
