@@ -5,13 +5,22 @@ import nvisii as nv
 import pybullet as p 
 from transform_utils import euler2quat
 
+def get_object_categories():
+    if os.path.exists('obj_csv/categories_dict.txt'):
+        with open('obj_csv/categories_dict.txt', 'r') as f:
+            lines = f.readlines()
+        dict_str = ''.join([line.replace('\n','').replace('\t','') for line in lines])
+        category_dic = eval(dict_str)
+        return category_dic
+    return None
+
 def get_pybullet_init_euler():
     init_euler = {}
     if os.path.exists('euler_pybullet.csv'):
         with open('euler_pybullet.csv', 'r') as f:
             lines = f.readlines()
         for line in lines:
-            e = line.replace('\n', '').split('\t')
+            e = line.replace('\n', '').split(',')
             init_euler[int(e[0])] = [float(e[1]), float(e[2]), float(e[3])]
     return init_euler
 
@@ -21,7 +30,7 @@ def get_ycb_init_euler():
         with open('euler_ycb.csv', 'r') as f:
             lines = f.readlines()
         for line in lines:
-            e = line.replace('\n', '').split('\t')
+            e = line.replace('\n', '').split(',')
             init_euler[int(e[0])] = [float(e[1]), float(e[2]), float(e[3])]
     return init_euler
 
@@ -31,7 +40,7 @@ def get_housecat_init_euler():
         with open('euler_housecat.csv', 'r') as f:
             lines = f.readlines()
         for line in lines:
-            e = line.replace('\n', '').split('\t')
+            e = line.replace('\n', '').split(',')
             init_euler[int(e[0])] = [float(e[1]), float(e[2]), float(e[3])]
     for i in range(194):
         if i not in init_euler:
