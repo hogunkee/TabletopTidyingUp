@@ -6,8 +6,8 @@ import pybullet as p
 from transform_utils import euler2quat
 
 def get_object_categories():
-    if os.path.exists('obj_csv/categories_dict.txt'):
-        with open('obj_csv/categories_dict.txt', 'r') as f:
+    if os.path.exists('render_category/categories_dict.txt'):
+        with open('render_category/categories_dict.txt', 'r') as f:
             lines = f.readlines()
         dict_str = ''.join([line.replace('\n','').replace('\t','') for line in lines])
         category_dic = eval(dict_str)
@@ -152,7 +152,7 @@ def get_velocity(object_ids):
         velocities_rotation.append(vel_rot)
     return velocities_linear, velocities_rotation
 
-def update_visual_objects(object_ids, pkg_path, nv_objects=None):
+def update_visual_objects(object_ids, pkg_path, nv_objects=None, metallic_ids=[], glass_ids=[]):
     # object ids are in pybullet engine
     # pkg_path is for loading the object geometries
     # nv_objects refers to the already entities loaded, otherwise it is going 
@@ -162,6 +162,11 @@ def update_visual_objects(object_ids, pkg_path, nv_objects=None):
     objs = copy.deepcopy(object_ids)
     objs.append(1)
     for object_id in objs:
+        is_metallic, is_glass = False, False
+        if object_id in metallic_ids:
+            is_metallic = True
+        elif object_id in glass_ids:
+            is_glass = True
         for idx, visual in enumerate(p.getVisualShapeData(object_id)):
 
             # Extract visual data from pybullet
@@ -265,10 +270,38 @@ def update_visual_objects(object_ids, pkg_path, nv_objects=None):
                 nv_objects[object_name].transforms[0].set_transform(m1 * m2)
                 nv_objects[object_name].transforms[0].set_scale(dimensions)
 
-                for m in nv_objects[object_name].materials:
-                    m.set_base_color((rgbaColor[0] ** 2.2, rgbaColor[1] ** 2.2, rgbaColor[2] ** 2.2))
+                if is_metallic:
+                    for m in nv_objects[object_name].materials:
+                        m.set_base_color((0.5, 0.5, 0.5))
+                        m.set_metallic(0.98)
+                        m.set_transmission(0)
+                        m.set_roughness(0.5)
+                elif is_glass:
+                    for m in nv_objects[object_name].materials:
+                        m.set_base_color((0.6, 0.7, 0.95))
+                        m.set_metallic(0.1)
+                        m.set_transmission(0.7)
+                        m.set_roughness(0.95)
+                else:
+                    for m in nv_objects[object_name].materials:
+                        m.set_base_color((rgbaColor[0] ** 2.2, rgbaColor[1] ** 2.2, rgbaColor[2] ** 2.2))
             # for entities created for primitive shapes
             else:
+                if is_metallic:
+                    for m in nv_objects[object_name].materials:
+                        m.set_base_color((0.3, 0.3, 0.3))
+                        m.set_metallic(0.98)
+                        m.set_transmission(0)
+                        m.set_roughness(0.5)
+                elif is_glass:
+                    for m in nv_objects[object_name].materials:
+                        m.set_base_color(np.array((0.2, 0.3, 0.5))**2)
+                        m.set_metallic(0.2)
+                        m.set_transmission(0.6)
+                        m.set_roughness(0.95)
+                else:
+                    for m in nv_objects[object_name].materials:
+                        m.set_base_color((rgbaColor[0] ** 2.2, rgbaColor[1] ** 2.2, rgbaColor[2] ** 2.2))
                 nv_objects[object_name].get_transform().set_transform(m1 * m2)
                 nv_objects[object_name].get_material().set_base_color(
                     (
@@ -278,6 +311,7 @@ def update_visual_objects(object_ids, pkg_path, nv_objects=None):
                     )
                 )
             # print(visualGeometryType)
+
     return nv_objects
 
 def remove_visual_objects(nv_objects):

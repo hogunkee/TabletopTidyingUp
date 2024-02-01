@@ -8,6 +8,7 @@ for cat in categories:
     for obj in objects:
         dataset = obj.split('_')[0]
         object_name = '_'.join(obj.replace('.png', '').split('_')[1:])
+        object_name = dataset + '/' + object_name
         category2obj[cat].append(object_name)
 
 print(category2obj)
