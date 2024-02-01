@@ -16,15 +16,14 @@ opt.height = 500
 opt.noise = False
 opt.dataset = 'train' #'train' or 'test'
 opt.objectset = 'housecat' #'pybullet'/'ycb'/'housecat'/'all'
-opt.pybullet_object_path = '/ssd/disk/pybullet-URDF-models/urdf_models/models'
-opt.ycb_object_path = '/ssd/disk/YCB_dataset'
-opt.housecat_object_path = '/ssd/disk/housecat6d/obj_models_small_size_final'
-#opt.pybullet_object_path = '/home/wooseoko/workspace/hogun/pybullet_scene_gen/TabletopTidyingUp/pybullet-URDF-models/urdf_models/models'
+#opt.pybullet_object_path = '/ssd/disk/pybullet-URDF-models/urdf_models/models'
+#opt.ycb_object_path = '/ssd/disk/YCB_dataset'
+#opt.housecat_object_path = '/ssd/disk/housecat6d/obj_models_small_size_final'
+opt.pybullet_object_path = '/home/wooseoko/workspace/hogun/pybullet_scene_gen/TabletopTidyingUp/pybullet-URDF-models/urdf_models/models'
+opt.ycb_object_path = '/home/wooseoko/workspace/hogun/pybullet_scene_gen/YCB_dataset'
+opt.housecat_object_path = '/home/wooseoko/workspace/hogun/pybullet_scene_gen/TabletopTidyingUp/housecat6d/obj_models_small_size_final'
 # opt.pybullet_object_path = '/home/brain2/workspace/TabletopTidyingUp/pybullet-URDF-models/urdf_models/models'
 # opt.ycb_object_path = '/home/brain2/workspace/TabletopTidyingUp/ycb_dataset'
-#opt.ycb_object_path = '/home/wooseoko/workspace/hogun/pybullet_scene_gen/YCB_dataset'
-# opt.ig_object_path = '/home/wooseoko/workspace/hogun/pybullet_scene_gen/TabletopTidyingUp/ig_dataset/objects'
-#opt.housecat_object_path = '/home/wooseoko/workspace/hogun/pybullet_scene_gen/TabletopTidyingUp/housecat6d/obj_models_small_size_final'
 # opt.housecat_object_path = '/home/brain2/workspace/TabletopTidyingUp/housecat6d/obj_models_small_size_final'
 
 ts = TabletopScenes(opt)
@@ -50,7 +49,7 @@ objs = list(zip(obj_names, obj_sizes))
 object_cat_to_name = get_object_categories()
 objs_to_spawn = [o for o in object_cat_to_name['spoon'] if opt.objectset in o]
 print(objs_to_spawn)
-#objs_to_spawn = ['pybullet/blue_plate','pybullet/grey_plate','pybullet/plate', 'pybullet/round_plate_1', 'pybullet/round_plate_2', 'pybullet/round_plate_3', 'pybullet/round_plate_4']
+#objs_to_spawn = ['housecat/teapot-white_malacasa', 'housecat/teapot-white_rectangle_sprout', 'housecat/teapot-white_rectangle', 'housecat/teapot-white_royal_norfolk', 'housecat/teapot-white_small', 'housecat/teapot-white_spherical', 'housecat/teapot-white_was_brand', 'housecat/teapot-wooden_color']
 objs_to_spawn = [(obj, 'medium') for obj in objs_to_spawn]
 
 f = open('euler_%s_new.csv' %opt.objectset, 'a')

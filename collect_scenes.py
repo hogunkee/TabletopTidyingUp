@@ -190,7 +190,7 @@ class TabletopScenes(object):
             for m2 in obj_model_list:
                 housecat_object_names.append(m2.split('.urdf')[0])
         housecat_object_names = sorted(housecat_object_names)
-
+        
         pybullet_ids = ['pybullet-%d'%p for p in range(len(pybullet_object_names))]
         ycb_ids = ['ycb-%d'%y for y in range(len(ycb_object_names))]
         # ig_ids = ['ig-%d'%i for i in range(len(ig_object_names))]
@@ -653,6 +653,7 @@ class TabletopScenes(object):
         depth = np.flip(depth, axis = 0)
         depth[np.isinf(depth)] = 3
         depth[depth < 0] = 3
+        depth = depth.astype(np.float16)
         np.save(f"{out_folder}/depth_{camera}.npy", depth)
         
         entity_id = nv.render_data(
@@ -665,6 +666,7 @@ class TabletopScenes(object):
         entity = np.flip(entity, axis = 0)
         entity[np.isinf(entity)] = -1
         entity[entity>self.opt.nb_objects + 50] = -1
+        entity = entity.astype(np.int8)
         np.save(f"{out_folder}/seg_{camera}.npy", entity)
         return
 
