@@ -17,7 +17,7 @@ def get_object_categories():
 def get_pybullet_init_euler():
     init_euler = {}
     if os.path.exists('euler_pybullet_new.csv'):
-        with open('euler_pybullet_new.csv', 'r') as f:
+        with open('euler_pybullet_new-1.csv', 'r') as f:
             lines = f.readlines()
         for line in lines:
             e = line.replace('\n', '').split(',')
@@ -26,8 +26,8 @@ def get_pybullet_init_euler():
 
 def get_ycb_init_euler():
     init_euler = {}
-    if os.path.exists('euler_ycb.csv'):
-        with open('euler_ycb.csv', 'r') as f:
+    if os.path.exists('euler_ycb_new.csv'):
+        with open('euler_ycb_new.csv', 'r') as f:
             lines = f.readlines()
         for line in lines:
             e = line.replace('\n', '').split(',')
@@ -36,8 +36,8 @@ def get_ycb_init_euler():
 
 def get_housecat_init_euler():
     init_euler = {}
-    if os.path.exists('euler_housecat.csv'):
-        with open('euler_housecat.csv', 'r') as f:
+    if os.path.exists('euler_housecat_new.csv'):
+        with open('euler_housecat_new.csv', 'r') as f:
             lines = f.readlines()
         for line in lines:
             e = line.replace('\n', '').split(',')
