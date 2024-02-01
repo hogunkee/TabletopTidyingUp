@@ -21,7 +21,7 @@ def get_pybullet_init_euler():
             lines = f.readlines()
         for line in lines:
             e = line.replace('\n', '').split(',')
-            init_euler[int(e[0])] = [float(e[1]), float(e[2]), float(e[3])]
+            init_euler[int(e[0])] = [float(e[1]), float(e[2]), float(e[3]), float(e[4])]
     return init_euler
 
 def get_ycb_init_euler():
@@ -31,7 +31,7 @@ def get_ycb_init_euler():
             lines = f.readlines()
         for line in lines:
             e = line.replace('\n', '').split(',')
-            init_euler[int(e[0])] = [float(e[1]), float(e[2]), float(e[3])]
+            init_euler[int(e[0])] = [float(e[1]), float(e[2]), float(e[3]), float(e[4])]
     return init_euler
 
 def get_housecat_init_euler():
@@ -41,10 +41,10 @@ def get_housecat_init_euler():
             lines = f.readlines()
         for line in lines:
             e = line.replace('\n', '').split(',')
-            init_euler[int(e[0])] = [float(e[1]), float(e[2]), float(e[3])]
+            init_euler[int(e[0])] = [float(e[1]), float(e[2]), float(e[3]), float(e[4])]
     for i in range(194):
         if i not in init_euler:
-            init_euler[i] = [1, 0, 0]
+            init_euler[i] = [1, 0, 0, 1]
     return init_euler
 
 def get_init_euler():
