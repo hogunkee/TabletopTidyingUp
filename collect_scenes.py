@@ -338,6 +338,8 @@ class TabletopScenes(object):
             for m2 in obj_model_list:
                 housecat_object_names.append(m2.split('.urdf')[0])
 
+        housecat_object_names = sorted(housecat_object_names)
+        
         pybullet_ids = ['pybullet-%d'%p for p in range(len(pybullet_object_names))]
         ycb_ids = ['ycb-%d'%y for y in range(len(ycb_object_names))]
         # ig_ids = ['ig-%d'%i for i in range(len(ig_object_names))]

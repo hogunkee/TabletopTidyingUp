@@ -14,7 +14,7 @@ opt.width = 500
 opt.height = 500 
 opt.noise = False
 opt.dataset = 'train' #'train' or 'test'
-opt.objectset = 'pybullet' #'pybullet'/'ycb'/'housecat'/'all'
+opt.objectset = 'housecat' #'pybullet'/'ycb'/'housecat'/'all'
 # opt.pybullet_object_path = '/ssd/pybullet-URDF-models/urdf_models/models'
 # opt.ycb_object_path = '/ssd/YCB_dataset'
 # opt.ig_object_path = '/ssd/ig_dataset/objects'
@@ -47,7 +47,7 @@ obj_names = [opt.objectset+'/'+obj for obj in obj_names]
 obj_sizes = ['medium'] * len(obj_names)
 objs = list(zip(obj_names, obj_sizes))
 
-objs_to_spawn = ['pybullet/blue_plate','pybullet/grey_plate','pybullet/plate', 'pybullet/round_plate_1', 'pybullet/round_plate_2', 'pybullet/round_plate_3', 'pybullet/round_plate_4']
+objs_to_spawn = ['housecat/teapot-white_malacasa', 'housecat/teapot-white_rectangle_sprout', 'housecat/teapot-white_rectangle', 'housecat/teapot-white_royal_norfolk', 'housecat/teapot-white_small', 'housecat/teapot-white_spherical', 'housecat/teapot-white_was_brand', 'housecat/teapot-wooden_color']
 objs_to_spawn = [(obj, 'medium') for obj in objs_to_spawn]
 
 f = open('euler_%s_new.csv' %opt.objectset, 'a')
