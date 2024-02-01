@@ -81,7 +81,7 @@ if path.exists('euler_%s_new.csv' %opt.objectset):
                 pos_new = [xx[idx], yy[idx], 0.7 + scale * 0.1]
                 if uid in ts.init_euler:
                     print('init euler:', ts.init_euler[uid])
-                    roll, pitch, yaw = np.array(ts.init_euler[uid]) * np.pi / 2
+                    roll, pitch, yaw, _ = np.array(ts.init_euler[uid]) * np.pi / 2
                 else:
                     print(uid, 'has no default euler angles.')
                     if opt.objectset=='housecat':
