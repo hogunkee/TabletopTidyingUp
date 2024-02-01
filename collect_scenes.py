@@ -453,7 +453,7 @@ class TabletopScenes(object):
                 obj_cat = templates['objects'][str(obj_id)]
                 if 'large' in obj_cat or 'small' in obj_cat:
                     obj_size = obj_cat.split('_')[0]
-                    obj_cat = ''.join(obj_cat.split('_')[1:])
+                    obj_cat = '_'.join(obj_cat.split('_')[1:])
                 else:
                     obj_size = 'medium'
                 obj_name = np.random.choice(object_cat_to_name[obj_cat])               

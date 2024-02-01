@@ -5,20 +5,16 @@ import pybullet as p
 import numpy as np
 import cv2
 import time
-from scene_utils import cal_distance, quaternion_multiply
+from scene_utils import cal_distance, get_init_euler, get_rotation, quaternion_multiply
 from template_utils import camera_top_view
 import json
 from gen_sg import generate_sg
+from collect_template_list import scene_list, cat_to_name_train, cat_to_name_test
 
 mouseX = 0
 mouseY = 0
 rgb = np.zeros((360,480,3), np.uint8)
 
-cat_to_name = {
-    'plate' : ['blue_plate', 'grey_plate','plate','round_plate_1', 'round_plate_2','round_plate_3','round_plate_4'],
-    'fork' : ['fork'],
-    'knife' : ['knife']
-}
 
 def draw_circle(event, x, y, flags, param):
     global mouseX, mouseY
@@ -33,7 +29,7 @@ def draw_circle(event, x, y, flags, param):
 
 
 class TemplateCollector():
-    def __init__(self, save_folder) -> None:
+    def __init__(self, save_folder, is_train=True) -> None:
         ### camera parameters (top view)
         self.cam_width, self.cam_height = 480,360
         self.view_matrix, self.projection_matrix = camera_top_view(self.cam_width,self.cam_height)
@@ -45,6 +41,15 @@ class TemplateCollector():
         self.base_rot = [0,0,0]
         self.save_folder = save_folder
         self.template_list = []
+        self.init_euler = get_init_euler()
+        self.is_train=is_train
+        if is_train:
+            self.cat_to_name = cat_to_name_train
+        else:
+            self.cat_to_name = cat_to_name_test
+            for cat in self.cat_to_name.keys():
+                if not self.cat_to_name[cat]:
+                    self.cat_to_name.append(cat_to_name_train[cat][0])
         
         self.pybullet_object_path = './pybullet-URDF-models/urdf_models/models'
         self.ycb_object_path = './YCB_dataset'
@@ -60,7 +65,7 @@ class TemplateCollector():
         }
         
         p.connect(p.GUI)
-        self.urdf_id_names = self.get_obj_dict('pybullet')
+        self.urdf_id_names = self.get_obj_dict('all')
         self.init_sim()
     
     def init_sim(self):
@@ -88,15 +93,16 @@ class TemplateCollector():
         ycb_object_path = self.ycb_object_path
         ycb_object_names = sorted([m for m in os.listdir(ycb_object_path) \
                             if os.path.isdir(os.path.join(ycb_object_path, m))])
-        exclusion_list = ['047_plastic_nut', '063-b_marbles', '063-c_marbles', '063-f_marbles', '072-g_toy_airplane']
+        # exclusion_list = ['047_plastic_nut', '063-b_marbles', '063-c_marbles', '063-f_marbles', '072-g_toy_airplane', '033_spatula', '39_key']
+        exclusion_list = ['039_key', '046_plastic_bolt', '047_plastic_nut', '063-b_marbles', '063-c_marbles', '063-f_marbles', '072-g_toy_airplane']
         for eo in exclusion_list:
             if eo in ycb_object_names:
                 ycb_object_names.remove(eo)
-        ig_object_path = self.ig_object_path
-        ig_object_names = []
-        for m1 in os.listdir(ig_object_path):
-            for m2 in os.listdir(os.path.join(ig_object_path, m1)):
-                ig_object_names.append(os.path.join(m1, m2))
+        # ig_object_path = self.ig_object_path
+        # ig_object_names = []
+        # for m1 in os.listdir(ig_object_path):
+        #     for m2 in os.listdir(os.path.join(ig_object_path, m1)):
+        #         ig_object_names.append(os.path.join(m1, m2))
         housecat_object_path = self.housecat_object_path
         housecat_categories = [h for h in os.listdir(housecat_object_path) if os.path.isdir(os.path.join(housecat_object_path, h)) and not h in ['bg', 'collision']]
         housecat_object_names = []
@@ -104,10 +110,11 @@ class TemplateCollector():
             obj_model_list = [h for h in os.listdir(os.path.join(housecat_object_path, m1)) if h.endswith('.urdf')]
             for m2 in obj_model_list:
                 housecat_object_names.append(m2.split('.urdf')[0])
-
+        housecat_object_names = sorted(housecat_object_names)
+        
         pybullet_ids = ['pybullet-%d'%p for p in range(len(pybullet_object_names))]
         ycb_ids = ['ycb-%d'%y for y in range(len(ycb_object_names))]
-        ig_ids = ['ig-%d'%i for i in range(len(ig_object_names))]
+        # ig_ids = ['ig-%d'%i for i in range(len(ig_object_names))]
         housecat_ids = ['housecat-%d'%h for h in range(len(housecat_object_names))]
         # urdf_id_names
         # key: {object_type}-{index} - e.g., 'pybullet-0'
@@ -122,11 +129,11 @@ class TemplateCollector():
                 ycb_ids, 
                 ycb_object_names
                 ))
-        elif objectset=='ig':
-            urdf_id_names = dict(zip(
-                ig_ids,
-                ig_object_names
-                ))
+        # elif objectset=='ig':
+        #     urdf_id_names = dict(zip(
+        #         ig_ids,
+        #         ig_object_names
+        #         ))
         elif objectset=='housecat':
             urdf_id_names = dict(zip(
                 housecat_ids,
@@ -229,18 +236,22 @@ class TemplateCollector():
                 cv2.waitKey(100)
             action_type, obj_id, pos, rot = action
             if action_type == 0: # spawn
-                obj_cat = self.templates['objects'][obj_id]
-                obj_name = np.random.choice(cat_to_name[obj_cat])
-                obj_path = self.get_object_path(obj_name)
-                sim_obj_id = p.loadURDF(obj_path, pos, rot)   
+                obj_cat, size = self.templates['objects'][obj_id]
+                obj_name = np.random.choice(self.cat_to_name[obj_cat])
+                obj_path, urdf_id = self.get_object_path(obj_name)
+                base_rot, scale = self.get_base_rot_and_size((obj_name, size), urdf_id)
+                spawn_rot = quaternion_multiply(rot, base_rot)
+                sim_obj_id = p.loadURDF(obj_path, pos, spawn_rot, globalScaling=scale)   
                 template_id_to_sim_id[obj_id] = sim_obj_id
                 self.load_template_objects[sim_obj_id] = obj_name
-                new_objects_list[sim_obj_id] = obj_cat
+                new_objects_list[sim_obj_id] = (obj_cat, size)
                 new_action = (0, sim_obj_id, pos, rot)
                 
             elif action_type == 1:
                 sim_obj_id = template_id_to_sim_id[obj_id]
-                p.resetBasePositionAndOrientation(sim_obj_id, pos, rot)
+                orig_pos, orig_rot = p.getBasePositionAndOrientation(sim_obj_id)
+                spawn_rot = quaternion_multiply(rot, orig_rot)
+                p.resetBasePositionAndOrientation(sim_obj_id, pos, spawn_rot)
                 new_action = (1, sim_obj_id, pos, rot)
                 
                 
@@ -309,12 +320,14 @@ class TemplateCollector():
         else:
             return None
 
-    def get_object_path(self, obj):
+    def get_object_path(self, obj_):
         urdf_ids = list(self.urdf_id_names.keys())
         obj_names = list(self.urdf_id_names.values())
-        
+
+        object_type = obj_.split('/')[0]
+        obj = obj_.split('/')[-1]
         urdf_id = urdf_ids[obj_names.index(obj)]
-        object_type = urdf_id.split('-')[0]
+
         if object_type=='pybullet':
             urdf_path = os.path.join(self.pybullet_object_path, obj, 'model.urdf')
         elif object_type=='ycb':
@@ -323,12 +336,26 @@ class TemplateCollector():
                 urdf_path = os.path.join(self.ycb_object_path, obj, 'tsdf', 'model.urdf')
             else:
                 urdf_path = os.path.join(self.ycb_object_path, obj, 'poisson', 'model.urdf')
-        elif object_type=='ig':
-            urdf_path = os.path.join(self.ig_object_path, obj, obj.split('/')[-1]+'.urdf')
         elif object_type=='housecat':
             urdf_path = os.path.join(self.housecat_object_path, obj.split('-')[0], obj+'.urdf')
-            
-        return urdf_path
+
+        return urdf_path, urdf_id
+
+
+
+
+    def get_base_rot_and_size(self, obj, urdf_id):
+        roll, pitch, yaw = 0, 0, 0
+        obj_name, size = obj
+        if urdf_id in self.init_euler:
+            roll, pitch, yaw, scale = np.array(self.init_euler[urdf_id])
+            if size == 'large': scale = scale * 1.2
+            elif size == 'small': scale = scale * 0.8
+            roll, pitch, yaw = roll * np.pi / 2, pitch * np.pi / 2, yaw * np.pi / 2
+        rot = get_rotation(roll, pitch, yaw)
+
+        return rot, scale
+
 
     def add_new_object(self, obj, pos):
         x,y,z = pos
@@ -340,14 +367,16 @@ class TemplateCollector():
             rot_angle = 0
         base_rot = np.array(self.base_rot) * np.pi/180. # base_rot[obj_name]
         base_rot = p.getQuaternionFromEuler(base_rot)
-        quat = p.getQuaternionFromEuler([0,0,rot_angle * np.pi / 180.0])
-        rot = quaternion_multiply(quat, base_rot)
+        quat = p.getQuaternionFromEuler([0,0,-rot_angle * np.pi / 180.0])
 
-        urdf_path = self.get_object_path(obj)
+        urdf_path, urdf_id = self.get_object_path(obj[0])
+        base_rot, scale = self.get_base_rot_and_size(obj, urdf_id,)
+        
+        rot = quaternion_multiply(quat, base_rot)
         
         pos = [x, y, z + 0.1]
-        obj_id = p.loadURDF(urdf_path, pos, rot)
-        return obj_id, pos, rot
+        obj_id = p.loadURDF(urdf_path, pos, rot, globalScaling=scale)
+        return obj_id, pos, quat
 
     def remove_added_obj(self, obj_id):
         removed_cat = self.spawned_objects.pop(obj_id)
@@ -400,18 +429,28 @@ class TemplateCollector():
                     if(obj_cat == 'q'):
                         print('quit add object')
                         break
-                    if obj_cat not in cat_to_name.keys() or obj_cat not in self.object_list:
+                    if 'large' in obj_cat or 'small' in obj_cat:
+                        try:
+                            size = obj_cat.split('_')[0]
+                            obj_cat = '_'.join(obj_cat.split('_')[1:])
+                        except:
+                            print('wrong category')
+                            continue
+                    else: size = 'medium'
+                    
+                    if obj_cat not in self.cat_to_name.keys() or obj_cat not in self.object_list:
                         print('wrong category')
                         continue
-                    obj = np.random.choice(cat_to_name[obj_cat])
                     
-                    obj_id, spawn_pos, spawn_rot = self.add_new_object(obj, [x_, y_, z_])
+                    obj = np.random.choice(self.cat_to_name[obj_cat])
+                    
+                    obj_id, spawn_pos, spawn_rot = self.add_new_object((obj, size), [x_, y_, z_]) # spawn_rot은 base_rot에서 회전한 정도를 저장.
                     self.spawned_objects[obj_id] = obj_cat
                     self.object_list.remove(obj_cat)
                     self.last_added_obj = obj_id
 
                     action = (0, obj_id, spawn_pos, spawn_rot)
-                    self.templates['objects'][obj_id] = obj_cat
+                    self.templates['objects'][obj_id] = (obj_cat, size)
                     self.templates['action_order'].append(action)
                     break
             
@@ -475,32 +514,38 @@ class TemplateCollector():
                     if(key == ord('[')):
                         print('\nrotate counter clockwise 30 degree')
                         new_pos = [pos[0], pos[1], min(pos[2]+0.15, 0.8)]
-                        new_rot = quaternion_multiply(rot, p.getQuaternionFromEuler([0,0,30*np.pi/180]))
+                        new_rot = quaternion_multiply(p.getQuaternionFromEuler([0,0,30*np.pi/180]),rot)
+                        quat = p.getQuaternionFromEuler([0,0,30*np.pi/180])
 
                         
                     elif(key == ord(']')):
                         print('\nrotate clockwise')
                         new_pos = [pos[0], pos[1], min(pos[2]+0.15, 0.8)]
-                        new_rot = quaternion_multiply(rot, p.getQuaternionFromEuler([0,0,-30*np.pi/180]))
+                        new_rot = quaternion_multiply(p.getQuaternionFromEuler([0,0,-30*np.pi/180]), rot)
+                        quat = p.getQuaternionFromEuler([0,0,-30*np.pi/180])
                                             
                     elif(key == ord('w')):
                         print('\nmove forward 0.03')
                         new_pos = [pos[0]-0.03, pos[1], min(pos[2]+0.15, 0.8)]
+                        quat = p.getQuaternionFromEuler([0,0,0])
                         new_rot = rot
                         
                     elif(key == ord('s')):
                         print('\nmove backward 0.03')
                         new_pos = [pos[0]+0.03, pos[1], min(pos[2]+0.15, 0.8)]
+                        quat = p.getQuaternionFromEuler([0,0,0])
                         new_rot = rot
                         
                     elif(key == ord('a')):
                         print('\nmove left 0.03')
                         new_pos = [pos[0], pos[1]-0.03, min(pos[2]+0.15, 0.8)]
+                        quat = p.getQuaternionFromEuler([0,0,0])
                         new_rot = rot
                         
                     elif(key == ord('d')):
                         print('\nmove right 0.03')
                         new_pos = [pos[0], pos[1]+0.03, min(pos[2]+0.15, 0.8)]
+                        quat = p.getQuaternionFromEuler([0,0,0])
                         new_rot = rot
                         
                     elif(key == ord('q')):
@@ -508,7 +553,7 @@ class TemplateCollector():
                         break
                     
                     p.resetBasePositionAndOrientation(clicked_object, new_pos, new_rot)
-                    self.templates['action_order'].append((1, clicked_object, new_pos, new_rot))
+                    self.templates['action_order'].append((1, clicked_object, new_pos, quat))
                             
             elif(key == 13): #enter
                 print('\nsimulate')
@@ -518,17 +563,19 @@ class TemplateCollector():
 
 if __name__ == "__main__":
     save_folder = './templates'
-    with open('./collect_template_list.json' ,'r') as f:
-        scene_list = json.load(f)
     collector = TemplateCollector(save_folder)
     
     # saved_scene_list = collector.check_saved_scene_and_templates()
-    collect_scene_names = ['env1-s1']
-    
-    for scene_name in scene_list.keys():
+    collect_scene_names = ['D2',' D7', 'D11', 'D13', 'D16','O2','O3','O8', 'O10', 'O12', 'B3','B5','C3','C7', 'C12', 'C14']
+    # 호건 : ['D1',' D6', 'D12', 'D14', 'D15', 'O1','O4','O9', 'O11', 'O14','B6','B7','C2','C4','C5','C9', 'C11']
+    # 우석 : ['D2',' D7', 'D11', 'D13', 'D16','O2','O3','O8', 'O10', 'O12', 'B3','B5','C3','C7', 'C12', 'C14']
+    # 나경 : ['D3','D4','D5','D8','D9', 'D10','O5','O6','O7', 'O13','B1','B2','B3','B8','C1','C6','C8', 'C10', 'C14']
+
+
+
+    for scene_name in collect_scene_names:
         print(scene_name)
-        if scene_name in collect_scene_names:
-            print(scene_name)
-            template = scene_list[scene_name]
-            collector.collect_template(scene_name, template)   
+        template = scene_list[scene_name]
+        collector.collect_template(scene_name, template)
+        
     

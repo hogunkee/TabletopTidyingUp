@@ -1,5 +1,6 @@
 import os
 from os import path
+import time
 import pandas as pd
 import numpy as np
 import pybullet as p 
@@ -14,7 +15,7 @@ opt.width = 500
 opt.height = 500 
 opt.noise = False
 opt.dataset = 'train' #'train' or 'test'
-opt.objectset = 'housecat' #'pybullet'/'ycb'/'housecat'/'all'
+opt.objectset = 'pybullet' #'pybullet'/'ycb'/'housecat'/'all'
 # opt.pybullet_object_path = '/ssd/pybullet-URDF-models/urdf_models/models'
 # opt.ycb_object_path = '/ssd/YCB_dataset'
 # opt.ig_object_path = '/ssd/ig_dataset/objects'
@@ -94,6 +95,7 @@ if path.exists('euler_%s_new.csv' %opt.objectset):
                 for j in range(500):
                     p.stepSimulation()
                     if j%100==0:
+                        time.sleep(0.1)                        
                         pass
                         # count = len(os.listdir('render/'))
                         # nv.ids = update_visual_objects(ts.current_pybullet_ids, "", nv.ids)
@@ -149,8 +151,8 @@ if path.exists('euler_%s_new.csv' %opt.objectset):
                         euler = values[:3]
                         scale = values[3]
                         remove_visual_objects(nv.ids)
-                        ts.respawn_object(object_name, scale) 
-                    ts.init_euler[uid] = euler
+                        ts.respawn_object((object_name,'medium'), scale) 
+                    ts.init_euler[uid] = euler + [scale]
                     continue
                 
         ts.clear()
