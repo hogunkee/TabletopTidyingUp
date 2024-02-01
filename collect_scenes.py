@@ -33,7 +33,7 @@ object_cat_to_name = {
 	'conditioner': ['pybullet/conditioner'],
 	'cup': ['pybullet/green_cup', 'pybullet/orange_cup', 'pybullet/mug', 'ycb/025_mug', 'ycb/065-a_cups', 'ycb/065-b_cups', 'ycb/065-c_cups', 'ycb/065-d_cups', 'ycb/065-e_cups', 'ycb/065-f_cups', 'ycb/065-g_cups', 'ycb/065-h_cups', 'ycb/065-i_cups', 'ycb/065-j_cups', 'housecat/cup-green_actys', 'housecat/cup-green_handle', 'housecat/cup-grey_handle', 'housecat/cup-mc_cafe', 'housecat/cup-new_york_big', 'housecat/cup-new_york', 'housecat/cup-plastic_green_flowers', 'housecat/cup-red_heart', 'housecat/cup-red', 'housecat/cup-stanford', 'housecat/cup-teal_pattern_ikea', 'housecat/cup-white_coffee_round_handle', 'housecat/cup-white_hogermann', 'housecat/cup-white_whisker', 'housecat/cup-yellow_handle', 'housecat/cup-yellow_white_border'],
 	'drill': ['pybullet/power_drill', 'ycb/035_power_drill'],
-	'etc': ['pybullet/repellent', 'pybullet/blue_moon', 'pybullet/poker_1', 'pybullet/pen_container_1', 'pybullet/pitcher', 'pybullet/orion_pie', 'pybullet/plate_holder', 'pybullet/correction_fluid', 'ycb/019_pitcher_base', 'ycb/026_sponge', 'ycb/033_spatula', 'ycb/038_padlock', 'ycb/039_key', 'ycb/059_chain', 'ycb/071_nine_hole_peg_test'],
+	'etc': ['pybullet/repellent', 'pybullet/blue_moon', 'pybullet/poker_1', 'pybullet/pen_container_1', 'pybullet/pitcher', 'pybullet/orion_pie', 'pybullet/plate_holder', 'pybullet/correction_fluid', 'ycb/019_pitcher_base', 'ycb/026_sponge', 'ycb/038_padlock', 'ycb/059_chain', 'ycb/071_nine_hole_peg_test'],
 	'fork': ['housecat/cutlery-fork_1_new', 'housecat/cutlery-fork_1', 'housecat/cutlery-fork_2_new', 'housecat/cutlery-fork_3_new'],
 	'fruits': ['pybullet/plastic_plum', 'pybullet/plastic_lemon', 'pybullet/plastic_strawberry', 'pybullet/plastic_apple', 'pybullet/plastic_banana', 'pybullet/plastic_orange', 'ycb/011_banana', 'ycb/012_strawberry', 'ycb/013_apple', 'ycb/014_lemon', 'ycb/015_peach', 'ycb/016_pear', 'ycb/017_orange', 'ycb/018_plum'],
 	'glass': ['housecat/glass-new_1', 'housecat/glass-new_2', 'housecat/glass-new_3', 'housecat/glass-new_4', 'housecat/glass-new_5', 'housecat/glass-new_6', 'housecat/glass-new_7', 'housecat/glass-new_8', 'housecat/glass-new_9', 'housecat/glass-new_10', 'housecat/glass-new_11', 'housecat/glass-new_12', 'housecat/glass-new_13', 'housecat/glass-small', 'housecat/glass-small_3', 'housecat/glass-small_4'],
@@ -273,7 +273,7 @@ class TabletopScenes(object):
         # reset pybullet #
         p.resetSimulation()
         p.setAdditionalSearchPath(pybullet_data.getDataPath())
-        p.setGravity(0,0,-98)
+        p.setGravity(0,0,-9.8)
         p.setTimeStep(1 / 240)
 
         # set the plane and table        
@@ -320,7 +320,8 @@ class TabletopScenes(object):
         ycb_object_path = self.opt.ycb_object_path
         ycb_object_names = sorted([m for m in os.listdir(ycb_object_path) \
                             if os.path.isdir(os.path.join(ycb_object_path, m))])
-        exclusion_list = ['047_plastic_nut', '063-b_marbles', '063-c_marbles', '063-f_marbles', '072-g_toy_airplane']
+        # exclusion_list = ['047_plastic_nut', '063-b_marbles', '063-c_marbles', '063-f_marbles', '072-g_toy_airplane', '033_spatula', '39_key']
+        exclusion_list = ['039_key', '046_plastic_bolt', '047_plastic_nut', '063-b_marbles', '063-c_marbles', '063-f_marbles', '072-g_toy_airplane']
         for eo in exclusion_list:
             if eo in ycb_object_names:
                 ycb_object_names.remove(eo)
@@ -588,7 +589,7 @@ class TabletopScenes(object):
                     obj_cat = ''.join(obj_cat.split('_')[1:])
                 else:
                     obj_size = 'medium'
-                obj_name = np.random.choice(object_cat_to_name[obj_cat])                 # cat to name
+                obj_name = np.random.choice(object_cat_to_name[obj_cat])               
                 spawn_list.append((obj_name, obj_size))
                 obj_name = obj_name.split('/')[-1]
                 template_id_to_obj[obj_id] = (obj_name, obj_size)
@@ -852,9 +853,6 @@ class TabletopScenes(object):
 
 
 
-
-
-
 if __name__=='__main__':
     opt = lambda : None
     opt.nb_objects = 8 #20 #20
@@ -888,62 +886,22 @@ if __name__=='__main__':
         print(f'created folder {opt.out_folder}/')
         
     ### use template ###
-    template_folder = './templates'
-    template_files = os.listdir(template_folder)
-    template_files = [f for f in template_files if f.lower().endswith('.json')]
-    collect_scenes = ['env1-s1'] #... train/test 나눠서 수집. test에 들어가는거 : unseen template, unseen obj + seen template. 이거 두개도 나눠서 수집해야할듯,
-    ts = TabletopScenes(opt)
-    for template_file in template_files:
-        if template_file.split('_')[0] in collect_scenes:
-            
-            for traj_id in range(100): # collect trajectory num
-                scene = template_file.split('_')[0]
-                template_id = template_file.split('_')[-1].split('.')[0]
-                scene_id = {'scene': scene, 'template_id': template_id,'trajectory': traj_id, 'frame': 0}
-                
-                ts.set_floor(texture_id=-1)
-                print(f'rendering scene {str(scene_id["scene"])}-{str(scene_id["template_id"])}-{str(scene_id["trajectory"])}-{str(scene_id["frame"])}', end='\r')
-                success_placement = ts.load_template(scene_id, os.path.join(template_folder, template_file))
-                scene_id['frame'] += 1
-                
-                # 2. Move each object to a random place #
-                while scene_id['frame'] < int(opt.nb_frames): #
-                    print(f'rendering scene {str(scene_id["scene"])}-{str(scene_id["template_id"])}-{str(scene_id["trajectory"])}-{str(scene_id["frame"])}', end='\r')
-                    success_placement = ts.random_messup_objects(scene_id)
-                    if not success_placement:
-                        continue
-                    scene_id['frame'] += 1
-                    
-                ts.clear()
-                
-        ts.clear()
-    ts.close()
-
-    # spawn_objects_list = object_name_list #['stapler_2', 'two_color_hammer', 'scissors', 'extra_large_clamp', 'phillips_screwdriver', 'stapler_1', 'conditioner', 'book_1', 'book_2', 'book_3', 'book_4', 'book_5', 'book_6', 'power_drill', 'plastic_pear', 'cracker_box', 'blue_plate', 'blue_cup', 'cleanser', 'bowl', 'plastic_lemon', 'mug', 'square_plate_4', 'sugar_box', 'plastic_strawberry', 'medium_clamp', 'plastic_peach', 'knife', 'square_plate_2', 'fork', 'plate', 'green_cup', 'green_bowl', 'orange_cup', 'large_clamp', 'spoon', 'pink_tea_box', 'pudding_box', 'plastic_orange', 'plastic_apple', 'doraemon_plate', 'lipton_tea', 'yellow_bowl', 'grey_plate', 'gelatin_box', 'blue_tea_box', 'flat_screwdriver', 'mini_claw_hammer_1', 'shampoo', 'glue_1', 'glue_2', 'small_clamp', 'square_plate_3', 'doraemon_bowl', 'square_plate_1', 'round_plate_1', 'round_plate_3', 'round_plate_2', 'round_plate_4', 'plastic_banana', 'yellow_cup']
-    # train_objects_list = ['']
-    # #spawn_objects_list = ['bottle-85_alcool', 'bottle-nivea', 'can-fanta', 'can-redbull', 'cup-grey_handle', 'cup-new_york', 'cup-stanford', 'remote-black', 'remote-toy', 'teapot-blue_floral']
-    # scenes = ['random_4', 'random_5', 'random_6', 'random_7'] #train 
-    # # scenes = ['random_3', 'random_4', 'random_5'] #test
+    # template_folder = './templates'
+    # template_files = os.listdir(template_folder)
+    # template_files = [f for f in template_files if f.lower().endswith('.json')]
+    # collect_scenes = ['env1-s1'] #... train/test 나눠서 수집. test에 들어가는거 : unseen template, unseen obj + seen template. 이거 두개도 나눠서 수집해야할듯,
     # ts = TabletopScenes(opt)
-    # for scene in scenes:
-    #     for n_set in range(opt.nb_randomset): 
-    #         n_obj = int(scene.split('_')[-1])
-    #         opt.inscene_objects = n_obj
-    #         spawn_list = np.random.choice(spawn_objects_list, opt.nb_objects, replace=False)
-    #         spawn_list = [(f, 'medium') for f in spawn_list]
-    #         ts.spawn_objects(spawn_list) # add random select or template load
-    #         for i in range(opt.num_traj):
-    #             traj_id = i # + num_exist_trajs
-    #             #############################
+    # for template_file in template_files:
+    #     if template_file.split('_')[0] in collect_scenes:
+            
+    #         for traj_id in range(100): # collect trajectory num
+    #             scene = template_file.split('_')[0]
+    #             template_id = template_file.split('_')[-1].split('.')[0]
+    #             scene_id = {'scene': scene, 'template_id': template_id,'trajectory': traj_id, 'frame': 0}
                 
-    #             scene_id = {'scene': scene, 'template_id': n_set,'trajectory': traj_id, 'frame': 0}           
-    #             success_placement = False
-    #             while not success_placement:
-    #                 ts.set_floor(texture_id=-1)
-    #                 print(f'rendering scene {str(scene_id["scene"])}-{str(scene_id["template_id"])}-{str(scene_id["trajectory"])}-{str(scene_id["frame"])}', end='\r')
-    #                 success_placement = ts.arrange_objects(scene_id, random=True)
-    #                 if not success_placement:
-    #                     continue
+    #             ts.set_floor(texture_id=-1)
+    #             print(f'rendering scene {str(scene_id["scene"])}-{str(scene_id["template_id"])}-{str(scene_id["trajectory"])}-{str(scene_id["frame"])}', end='\r')
+    #             success_placement = ts.load_template(scene_id, os.path.join(template_folder, template_file))
     #             scene_id['frame'] += 1
                 
     #             # 2. Move each object to a random place #
@@ -954,5 +912,44 @@ if __name__=='__main__':
     #                     continue
     #                 scene_id['frame'] += 1
                     
-    #         ts.clear()
-    #     ts.close()
+    #             ts.clear()
+                
+    #     ts.clear()
+    # ts.close()
+
+    spawn_objects_list = object_name_list #['stapler_2', 'two_color_hammer', 'scissors', 'extra_large_clamp', 'phillips_screwdriver', 'stapler_1', 'conditioner', 'book_1', 'book_2', 'book_3', 'book_4', 'book_5', 'book_6', 'power_drill', 'plastic_pear', 'cracker_box', 'blue_plate', 'blue_cup', 'cleanser', 'bowl', 'plastic_lemon', 'mug', 'square_plate_4', 'sugar_box', 'plastic_strawberry', 'medium_clamp', 'plastic_peach', 'knife', 'square_plate_2', 'fork', 'plate', 'green_cup', 'green_bowl', 'orange_cup', 'large_clamp', 'spoon', 'pink_tea_box', 'pudding_box', 'plastic_orange', 'plastic_apple', 'doraemon_plate', 'lipton_tea', 'yellow_bowl', 'grey_plate', 'gelatin_box', 'blue_tea_box', 'flat_screwdriver', 'mini_claw_hammer_1', 'shampoo', 'glue_1', 'glue_2', 'small_clamp', 'square_plate_3', 'doraemon_bowl', 'square_plate_1', 'round_plate_1', 'round_plate_3', 'round_plate_2', 'round_plate_4', 'plastic_banana', 'yellow_cup']
+    #spawn_objects_list = ['bottle-85_alcool', 'bottle-nivea', 'can-fanta', 'can-redbull', 'cup-grey_handle', 'cup-new_york', 'cup-stanford', 'remote-black', 'remote-toy', 'teapot-blue_floral']
+    scenes = ['random_4', 'random_5', 'random_6', 'random_7'] #train 
+    # scenes = ['random_3', 'random_4', 'random_5'] #test
+    ts = TabletopScenes(opt)
+    for scene in scenes:
+        for n_set in range(opt.nb_randomset): 
+            n_obj = int(scene.split('_')[-1])
+            opt.inscene_objects = n_obj
+            spawn_list = np.random.choice(spawn_objects_list, opt.nb_objects, replace=False)
+            spawn_list = [(f, 'medium') for f in spawn_list]
+            ts.spawn_objects(spawn_list) # add random select or template load
+            for i in range(opt.num_traj):
+                traj_id = i # + num_exist_trajs
+                #############################
+                
+                scene_id = {'scene': scene, 'template_id': n_set,'trajectory': traj_id, 'frame': 0}           
+                success_placement = False
+                while not success_placement:
+                    ts.set_floor(texture_id=-1)
+                    print(f'rendering scene {str(scene_id["scene"])}-{str(scene_id["template_id"])}-{str(scene_id["trajectory"])}-{str(scene_id["frame"])}', end='\r')
+                    success_placement = ts.arrange_objects(scene_id, random=True)
+                    if not success_placement:
+                        continue
+                scene_id['frame'] += 1
+                
+                # 2. Move each object to a random place #
+                while scene_id['frame'] < int(opt.nb_frames): #
+                    print(f'rendering scene {str(scene_id["scene"])}-{str(scene_id["template_id"])}-{str(scene_id["trajectory"])}-{str(scene_id["frame"])}', end='\r')
+                    success_placement = ts.random_messup_objects(scene_id)
+                    if not success_placement:
+                        continue
+                    scene_id['frame'] += 1
+                    
+            ts.clear()
+        ts.close()
