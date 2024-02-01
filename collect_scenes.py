@@ -792,6 +792,7 @@ class TabletopScenes(object):
         depth = np.flip(depth, axis = 0)
         depth[np.isinf(depth)] = 3
         depth[depth < 0] = 3
+        depth = depth.astype(np.float16)
         np.save(f"{out_folder}/depth_{camera}.npy", depth)
         
         entity_id = nv.render_data(
@@ -804,6 +805,7 @@ class TabletopScenes(object):
         entity = np.flip(entity, axis = 0)
         entity[np.isinf(entity)] = -1
         entity[entity>self.opt.nb_objects + 50] = -1
+        entity = entity.astype(np.int8)
         np.save(f"{out_folder}/seg_{camera}.npy", entity)
         return
 
