@@ -47,9 +47,9 @@ obj_sizes = ['medium'] * len(obj_names)
 objs = list(zip(obj_names, obj_sizes))
 
 object_cat_to_name = get_object_categories()
-objs_to_spawn = [o for o in object_cat_to_name['spoon'] if opt.objectset in o]
-print(objs_to_spawn)
-#objs_to_spawn = ['housecat/teapot-white_malacasa', 'housecat/teapot-white_rectangle_sprout', 'housecat/teapot-white_rectangle', 'housecat/teapot-white_royal_norfolk', 'housecat/teapot-white_small', 'housecat/teapot-white_spherical', 'housecat/teapot-white_was_brand', 'housecat/teapot-wooden_color']
+# objs_to_spawn = [o for o in object_cat_to_name['spoon'] if opt.objectset in o]
+# print(objs_to_spawn)
+objs_to_spawn = ['housecat/cup-white_coffee_round_handle', 'housecat/cup-stanford', 'housecat/cup-white_hogermann', 'housecat/cup-mc_cafe', 'housecat/cup-new_york', 'housecat/cup-red_heart', 'housecat/cup-yellow_handle', 'housecat/cup-teal_pattern_ikea', 'housecat/cup-new_york_big', 'housecat/cup-grey_handle', 'housecat/cup-yellow_white_border']
 objs_to_spawn = [(obj, 'medium') for obj in objs_to_spawn]
 
 f = open('euler_%s_new.csv' %opt.objectset, 'a')
@@ -83,18 +83,18 @@ for idx, obj_col_id in enumerate(ts.current_pybullet_ids):
             roll, pitch, yaw = roll  * np.pi / 2, pitch * np.pi / 2, yaw * np.pi / 2
         rot_new = get_rotation(roll, pitch, yaw)
         p.resetBasePositionAndOrientation(obj_col_id, pos_new, rot_new)
-        
+        print(rot_new)
         for j in range(500):
             p.stepSimulation()
             if j%100==0:
                 pass
-        if True:
-            count = len(os.listdir('render/'))
-            nv.ids = update_visual_objects(ts.current_pybullet_ids, "", nv.ids, metallic_ids=ts.metallic_ids, glass_ids=ts.glass_ids)
-            nv.set_camera_entity(camera_bird)
-            nv.render(int(opt.width), int(opt.height), int(opt.spp))
-            nv.render_to_file(width=int(opt.width), height=int(opt.height), 
-                samples_per_pixel=int(opt.spp), file_path=f"render/rgb_{count:05}.png")
+        # if True:
+        #     count = len(os.listdir('render/'))
+        #     nv.ids = update_visual_objects(ts.current_pybullet_ids, "", nv.ids, metallic_ids=ts.metallic_ids, glass_ids=ts.glass_ids)
+        #     nv.set_camera_entity(camera_bird)
+        #     nv.render(int(opt.width), int(opt.height), int(opt.spp))
+        #     nv.render_to_file(width=int(opt.width), height=int(opt.height), 
+        #         samples_per_pixel=int(opt.spp), file_path=f"render/rgb_{count:05}.png")
 
         # Format: roll, pitch, yaw, scale #
         x = input("Set new euler values.\n  format: roll, pitch, yaw, (scale)\nPress OK to move on to the next object.\nPress S to save the euler values.\nPress X to exit.\n")

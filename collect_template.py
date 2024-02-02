@@ -42,7 +42,7 @@ class TemplateCollector():
         self.save_folder = save_folder
         self.template_list = []
         self.init_euler = get_init_euler()
-        self.test_scenes = ['D5', 'D8', 'D11', 'O3', 'O7', 'B2', 'B5', 'C4', 'C6', 'C12']
+        self.test_scenes = ['D2', 'D8', 'D11', 'O3', 'O7', 'B2', 'B5', 'C4', 'C6', 'C12']
         
         self.pybullet_object_path = './pybullet-URDF-models/urdf_models/models'
         self.ycb_object_path = './YCB_dataset'
@@ -68,7 +68,7 @@ class TemplateCollector():
         p.setTimeStep(1 / 240)
 
         planeID = p.loadURDF("plane.urdf")
-        table_id = p.loadURDF("table/table.urdf", basePosition=[0.0,0.0,0.0], baseOrientation=[0.0,0.0,0.7071,0.7071])
+        table_id = p.loadURDF("table/table2.urdf", basePosition=[0.0,0.0,0.0], baseOrientation=[0.0,0.0,0.7071,0.7071])
 
         # start simulation
         for i in range(100):
@@ -359,8 +359,7 @@ class TemplateCollector():
         except:
             print('you entered wrong number. set rotation to 0')
             rot_angle = 0
-        base_rot = np.array(self.base_rot) * np.pi/180. # base_rot[obj_name]
-        base_rot = p.getQuaternionFromEuler(base_rot)
+
         quat = p.getQuaternionFromEuler([0,0,-rot_angle * np.pi / 180.0])
 
         urdf_path, urdf_id = self.get_object_path(obj[0])
@@ -493,6 +492,7 @@ class TemplateCollector():
                 key = cv2.waitKey(0)
                 if key == ord('y'):
                     print('quit')
+                    self.reset_scene()                    
                     break
                 else:
                     print('cancel quit')
@@ -574,7 +574,7 @@ if __name__ == "__main__":
     collector = TemplateCollector(save_folder)
     
     # saved_scene_list = collector.check_saved_scene_and_templates()
-    collect_scene_names = ['D11', 'D13', 'D16','O2','O3','O8', 'O10', 'O12', 'B3','B5','C3','C7', 'C12', 'C14']
+    collect_scene_names = ['D7','D11', 'D13', 'D16','O2','O3','O8', 'O10', 'O12', 'B3','B5','C3','C7', 'C12', 'C14']
     # 호건 : ['D1','D6', 'D12', 'D14', 'D15', 'O1','O4','O9', 'O11', 'O14','B6','B7','C2','C4','C5','C9', 'C11']
     # 우석 : ['D2','D7', 'D11', 'D13', 'D16','O2','O3','O8', 'O10', 'O12', 'B3','B5','C3','C7', 'C12', 'C14']
     # 나경 : ['D3','D4','D5','D8','D9', 'D10','O5','O6','O7', 'O13','B1','B2','B3','B8','C1','C6','C8', 'C10', 'C14']

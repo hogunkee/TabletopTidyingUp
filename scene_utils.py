@@ -63,7 +63,7 @@ def get_init_euler():
 def get_random_pos_from_grid():
     x = np.linspace(-0.3, 0.3, 4)
     y = np.linspace(-0.4, 0.4, 6)
-    z = np.linspace(0.7, 0.8, 2)
+    z = np.linspace(0.8, 1.0, 2)
     pos = (np.random.choice(x), np.random.choice(y), np.random.choice(z))
     return pos
 
@@ -388,7 +388,7 @@ def check_on_table(objects_list):
 def random_pos_on_table():
     pos_x = np.random.uniform(-0.3, 0.3)
     pos_y = np.random.uniform(-0.4, 0.4)
-    pos_z = np.random.uniform(0.75, 0.8)
+    pos_z = np.random.uniform(0.8, 0.9)
     return pos_x, pos_y, pos_z
 
 
