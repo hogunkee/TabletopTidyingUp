@@ -29,7 +29,7 @@ def draw_circle(event, x, y, flags, param):
 
 
 class TemplateCollector():
-    def __init__(self, save_folder, is_train=True) -> None:
+    def __init__(self, save_folder) -> None:
         ### camera parameters (top view)
         self.cam_width, self.cam_height = 480,360
         self.view_matrix, self.projection_matrix = camera_top_view(self.cam_width,self.cam_height)
@@ -42,21 +42,13 @@ class TemplateCollector():
         self.save_folder = save_folder
         self.template_list = []
         self.init_euler = get_init_euler()
-        self.is_train=is_train
-        if is_train:
-            self.cat_to_name = cat_to_name_train
-        else:
-            self.cat_to_name = cat_to_name_test
-            for cat in self.cat_to_name.keys():
-                if not self.cat_to_name[cat]:
-                    self.cat_to_name.append(cat_to_name_train[cat][0])
+        self.test_scenes = ['D5', 'D8', 'D11', 'O3', 'O7', 'B2', 'B5', 'C4', 'C6', 'C12']
         
         self.pybullet_object_path = './pybullet-URDF-models/urdf_models/models'
         self.ycb_object_path = './YCB_dataset'
         self.ig_object_path = './ig_dataset/objects'
         self.housecat_object_path = './housecat6d/obj_models_small_size_final'
 
-        self.last_added_obj = 0
         
         self.templates = {
             'objects' : {},  # id : semantic label (category)
@@ -268,6 +260,8 @@ class TemplateCollector():
         
         self.templates['action_order'] = new_actions
         self.templates['objects'] = new_objects_list
+        
+        self.spawned_objects = {k:v[0] for k,v in self.templates['objects'].items()}
 
     def exist_templates(self, scene_name):
         file_list = os.listdir(self.save_folder)
@@ -350,7 +344,7 @@ class TemplateCollector():
         if urdf_id in self.init_euler:
             roll, pitch, yaw, scale = np.array(self.init_euler[urdf_id])
             if size == 'large': scale = scale * 1.2
-            elif size == 'small': scale = scale * 0.8
+            elif size == 'small': scale = scale * 0.7
             roll, pitch, yaw = roll * np.pi / 2, pitch * np.pi / 2, yaw * np.pi / 2
         rot = get_rotation(roll, pitch, yaw)
 
@@ -379,26 +373,39 @@ class TemplateCollector():
         return obj_id, pos, quat
 
     def remove_added_obj(self, obj_id):
-        removed_cat = self.spawned_objects.pop(obj_id)
-        self.object_list.append(removed_cat)
         new_action_order = [x for x in self.templates['action_order'] if x[1] != obj_id]
         self.templates['action_order'] = new_action_order
-        self.templates['objects'].pop(obj_id)
+        obj_cat, size = self.templates['objects'].pop(obj_id)
+        self.spawned_objects.pop(obj_id)
+        if size == 'large' or size == 'small':
+            self.object_list.append(size + '_' + obj_cat)
+        else:
+            self.object_list.append(obj_cat)
         p.removeBody(obj_id)
 
     def collect_template(self, scene_name, template):
         global rgb
-        print(self.templates)
         self.spawned_objects = {}
         self.object_list = template.copy()
         self.exist_templates(scene_name)
+        print('exist templates : ', self.template_list)
+
+        if scene_name in self.test_scenes:
+            self.cat_to_name = cat_to_name_test
+            for cat in self.cat_to_name.keys():
+                if not self.cat_to_name[cat]:
+                    self.cat_to_name[cat].append(cat_to_name_train[cat][0])
+        else:
+            self.cat_to_name = cat_to_name_train
+
         clicked_object = None
         while True:
             self.load_image()
             cv2.imshow("image", rgb)
             cv2.setMouseCallback("image", draw_circle)
             cv2.imshow("image", rgb)        
-            print(self.templates)
+            print('template : ', self.templates)
+            print('remained object list : ', self.object_list)
             
             print('\n-------enter the action------')
             print('a : add object ')
@@ -432,25 +439,26 @@ class TemplateCollector():
                     if 'large' in obj_cat or 'small' in obj_cat:
                         try:
                             size = obj_cat.split('_')[0]
-                            obj_cat = '_'.join(obj_cat.split('_')[1:])
+                            obj_cat_spawn = '_'.join(obj_cat.split('_')[1:])
                         except:
                             print('wrong category')
                             continue
-                    else: size = 'medium'
+                    else: 
+                        size = 'medium'
+                        obj_cat_spawn = obj_cat
                     
-                    if obj_cat not in self.cat_to_name.keys() or obj_cat not in self.object_list:
+                    if obj_cat_spawn not in self.cat_to_name.keys() or obj_cat not in self.object_list:
                         print('wrong category')
                         continue
                     
-                    obj = np.random.choice(self.cat_to_name[obj_cat])
+                    obj = np.random.choice(self.cat_to_name[obj_cat_spawn])
                     
                     obj_id, spawn_pos, spawn_rot = self.add_new_object((obj, size), [x_, y_, z_]) # spawn_rot은 base_rot에서 회전한 정도를 저장.
                     self.spawned_objects[obj_id] = obj_cat
                     self.object_list.remove(obj_cat)
-                    self.last_added_obj = obj_id
 
                     action = (0, obj_id, spawn_pos, spawn_rot)
-                    self.templates['objects'][obj_id] = (obj_cat, size)
+                    self.templates['objects'][obj_id] = (obj_cat_spawn, size)
                     self.templates['action_order'].append(action)
                     break
             
@@ -566,15 +574,15 @@ if __name__ == "__main__":
     collector = TemplateCollector(save_folder)
     
     # saved_scene_list = collector.check_saved_scene_and_templates()
-    collect_scene_names = ['D2',' D7', 'D11', 'D13', 'D16','O2','O3','O8', 'O10', 'O12', 'B3','B5','C3','C7', 'C12', 'C14']
-    # 호건 : ['D1',' D6', 'D12', 'D14', 'D15', 'O1','O4','O9', 'O11', 'O14','B6','B7','C2','C4','C5','C9', 'C11']
-    # 우석 : ['D2',' D7', 'D11', 'D13', 'D16','O2','O3','O8', 'O10', 'O12', 'B3','B5','C3','C7', 'C12', 'C14']
+    collect_scene_names = ['D11', 'D13', 'D16','O2','O3','O8', 'O10', 'O12', 'B3','B5','C3','C7', 'C12', 'C14']
+    # 호건 : ['D1','D6', 'D12', 'D14', 'D15', 'O1','O4','O9', 'O11', 'O14','B6','B7','C2','C4','C5','C9', 'C11']
+    # 우석 : ['D2','D7', 'D11', 'D13', 'D16','O2','O3','O8', 'O10', 'O12', 'B3','B5','C3','C7', 'C12', 'C14']
     # 나경 : ['D3','D4','D5','D8','D9', 'D10','O5','O6','O7', 'O13','B1','B2','B3','B8','C1','C6','C8', 'C10', 'C14']
 
 
 
     for scene_name in collect_scene_names:
-        print(scene_name)
+        print('current scene : ', scene_name)
         template = scene_list[scene_name]
         collector.collect_template(scene_name, template)
         
