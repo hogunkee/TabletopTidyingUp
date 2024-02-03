@@ -1,6 +1,6 @@
 import os
 
-split = 'train'
+split = 'test'
 categories = ['_'.join(c.split('_')[:-1]) for c in os.listdir() if os.path.isdir(c) and c.endswith(split)]
 category2obj = {}
 num_objects = 0
@@ -17,7 +17,7 @@ for cat in categories:
 print(category2obj)
 print('Total number of objects:', num_objects)
 
-with open('categories_dict_train.txt', 'w') as g:
+with open('categories_dict_test.txt', 'w') as g:
     g.writelines("{\n")
     for k in sorted(category2obj.keys()):
         g.writelines("\t'%s': "%k)

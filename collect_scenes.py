@@ -904,17 +904,16 @@ if __name__=='__main__':
                 cnt = 0
                 # 2. Move each object to a random place #
                 while scene_id['frame'] < int(opt.nb_frames): #
+                    if cnt > 20:
+                        break
                     print(f'rendering scene {str(scene_id["scene"])}-{str(scene_id["template_id"])}-{str(scene_id["trajectory"])}-{str(scene_id["frame"])}', end='\r')
                     success_placement = ts.random_messup_objects(scene_id)
                     if not success_placement:
                         cnt += 1
                         continue
                     scene_id['frame'] += 1
-                    if cnt > 20:
-                        break
                 if cnt>20:
                     continue
-                traj_id += 1
-                
+                traj_id += 1                
             ts.clear()
         ts.close()
