@@ -880,11 +880,10 @@ if __name__=='__main__':
     #                 ts.clear()
     # ts.close()
 
-    scenes = ['random_4', 'random_5', 'random_6', 'random_7'] #train 
+    scenes = ['D3', 'D4', 'random_6', 'random_7'] #train 
     # scenes = ['random_5', 'random_6', 'random_7', 'random_8'] #test
     ts = TabletopScenes(opt, data_collect=True)
     spawn_objects_list = ts.object_name_list #['stapler_2', 'two_color_hammer', 'scissors', 'extra_large_clamp', 'phillips_screwdriver', 'stapler_1', 'conditioner', 'book_1', 'book_2', 'book_3', 'book_4', 'book_5', 'book_6', 'power_drill', 'plastic_pear', 'cracker_box', 'blue_plate', 'blue_cup', 'cleanser', 'bowl', 'plastic_lemon', 'mug', 'square_plate_4', 'sugar_box', 'plastic_strawberry', 'medium_clamp', 'plastic_peach', 'knife', 'square_plate_2', 'fork', 'plate', 'green_cup', 'green_bowl', 'orange_cup', 'large_clamp', 'spoon', 'pink_tea_box', 'pudding_box', 'plastic_orange', 'plastic_apple', 'doraemon_plate', 'lipton_tea', 'yellow_bowl', 'grey_plate', 'gelatin_box', 'blue_tea_box', 'flat_screwdriver', 'mini_claw_hammer_1', 'shampoo', 'glue_1', 'glue_2', 'small_clamp', 'square_plate_3', 'doraemon_bowl', 'square_plate_1', 'round_plate_1', 'round_plate_3', 'round_plate_2', 'round_plate_4', 'plastic_banana', 'yellow_cup']
-    print(spawn_objects_list)
     for scene in scenes:
         for n_set in range(opt.nb_randomset): 
             n_obj = int(scene.split('_')[-1])

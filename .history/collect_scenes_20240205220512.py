@@ -812,8 +812,7 @@ if __name__=='__main__':
     opt.mess_grid = True
     opt.nb_frames = 5 #7
     # opt.out_folder = '/ssd/disk/ur5_tidying_data/template-test/'
-    # opt.out_folder = '/home/wooseoko/workspace/hogun/pybullet_scene_gen/TabletopTidyingUp/dataset'
-    opt.out_folder = '/home/brain2/workspace/TabletopTidyingUp/dataset'
+    opt.out_folder = '/home/wooseoko/workspace/hogun/pybullet_scene_gen/TabletopTidyingUp/dataset'
     opt.nb_randomset = 50
     opt.num_traj = 40
     opt.num_combinations = 20
@@ -825,12 +824,9 @@ if __name__=='__main__':
     # opt.ycb_object_path = '/ssd/disk/YCB_dataset'
     # opt.housecat_object_path = '/ssd/disk/housecat6d/obj_models_small_size_final'
     opt.ig_object_path = '/ssd/disk/ig_dataset/objects'
-    # opt.pybullet_object_path = '/home/wooseoko/workspace/hogun/pybullet_scene_gen/TabletopTidyingUp/pybullet-URDF-models/urdf_models/models'
-    opt.pybullet_object_path = '/home/brain2/workspace/TabletopTidyingUp/pybullet-URDF-models/urdf_models/models'
-    # opt.ycb_object_path = '/home/wooseoko/workspace/hogun/pybullet_scene_gen/YCB_dataset'
-    opt.ycb_object_path = '/home/brain2/workspace/ycb_dataset'
-    # opt.housecat_object_path = '/home/wooseoko/workspace/hogun/pybullet_scene_gen/TabletopTidyingUp/housecat6d/obj_models_small_size_final'
-    opt.housecat_object_path = '/home/brain2/workspace/housecat6d/obj_models_small_size_final'
+    opt.pybullet_object_path = '/home/wooseoko/workspace/hogun/pybullet_scene_gen/TabletopTidyingUp/pybullet-URDF-models/urdf_models/models'
+    opt.ycb_object_path = '/home/wooseoko/workspace/hogun/pybullet_scene_gen/YCB_dataset'
+    opt.housecat_object_path = '/home/wooseoko/workspace/hogun/pybullet_scene_gen/TabletopTidyingUp/housecat6d/obj_models_small_size_final'
 
     if os.path.isdir(opt.out_folder):
         print(f'folder {opt.out_folder}/ exists')
@@ -884,7 +880,6 @@ if __name__=='__main__':
     # scenes = ['random_5', 'random_6', 'random_7', 'random_8'] #test
     ts = TabletopScenes(opt, data_collect=True)
     spawn_objects_list = ts.object_name_list #['stapler_2', 'two_color_hammer', 'scissors', 'extra_large_clamp', 'phillips_screwdriver', 'stapler_1', 'conditioner', 'book_1', 'book_2', 'book_3', 'book_4', 'book_5', 'book_6', 'power_drill', 'plastic_pear', 'cracker_box', 'blue_plate', 'blue_cup', 'cleanser', 'bowl', 'plastic_lemon', 'mug', 'square_plate_4', 'sugar_box', 'plastic_strawberry', 'medium_clamp', 'plastic_peach', 'knife', 'square_plate_2', 'fork', 'plate', 'green_cup', 'green_bowl', 'orange_cup', 'large_clamp', 'spoon', 'pink_tea_box', 'pudding_box', 'plastic_orange', 'plastic_apple', 'doraemon_plate', 'lipton_tea', 'yellow_bowl', 'grey_plate', 'gelatin_box', 'blue_tea_box', 'flat_screwdriver', 'mini_claw_hammer_1', 'shampoo', 'glue_1', 'glue_2', 'small_clamp', 'square_plate_3', 'doraemon_bowl', 'square_plate_1', 'round_plate_1', 'round_plate_3', 'round_plate_2', 'round_plate_4', 'plastic_banana', 'yellow_cup']
-    print(spawn_objects_list)
     for scene in scenes:
         for n_set in range(opt.nb_randomset): 
             n_obj = int(scene.split('_')[-1])
