@@ -285,7 +285,7 @@ class TabletopScenes(object):
             obj_id = p.loadURDF(urdf_path, [self.xx[self.spawn_obj_num], self.yy[self.spawn_obj_num], 0.15], rot, globalScaling=scale) #5.
             for i in range(100):
                 p.stepSimulation()
-            pos,orn = p.getBasePositionAndOrientation(obj_id)
+            pos, orn = p.getBasePositionAndOrientation(obj_id)
             self.base_rot[obj_id] = orn
             
             posa, posb = p.getAABB(obj_id)
@@ -794,10 +794,8 @@ class TabletopScenes(object):
         self.pickable_objects = obj_info['pickable_objects']
         with open(out_folder+"/obj_info.json", "w") as f:
             json.dump(obj_info, f)
-        
         return
-
-
+    
 
 
 if __name__=='__main__':

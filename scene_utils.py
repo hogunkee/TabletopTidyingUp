@@ -89,7 +89,9 @@ def generate_scene_shape(scene_type, num_objects):
         check_feasible = False
         while not check_feasible:
             xc, yc = np.array(random_pos_on_table())[:2]
-            x_hat = np.random.uniform(size=2) - 0.5
+            #x_hat = np.random.uniform(size=2) - 0.5
+            x_hat = np.random.choice([[1, 0], [0, 1], [-1, 0], [0, -1],
+                                      [1, 1], [-1, 1], [1, -1], [-1, -1]])
             x_hat /= np.linalg.norm(x_hat)
             x1, y1 = [xc, yc] - x_hat * 0.15 * num_objects/2
             x2, y2 = [xc, yc] + x_hat * 0.15 * num_objects/2
@@ -106,24 +108,50 @@ def generate_scene_shape(scene_type, num_objects):
         zs = np.ones(num_objects) * z_default + np.arange(num_objects) * 0.05
         positions = np.concatenate([xs, ys, zs]).reshape(3, num_objects).T
         rotations = []
-    return positions, rotations
+    elif scene_type=='line-rotated':
+        check_feasible = False
+        while not check_feasible:
+            xc, yc = np.array(random_pos_on_table())[:2]
+            #x_hat = np.random.uniform(size=2) - 0.5
+            x_hat = np.random.choice([[1, 0], [0, 1], [-1, 0], [0, -1],
+                                      [1, 1], [-1, 1], [1, -1], [-1, -1]])
+            x_hat /= np.linalg.norm(x_hat)
+            x1, y1 = [xc, yc] - x_hat * 0.15 * num_objects/2
+            x2, y2 = [xc, yc] + x_hat * 0.15 * num_objects/2
+            if min(x1, x2) < -0.3 or max(x1, x2) > 0.3:
+                check_feasible = False
+                continue
+            if min(y1, y2) < -0.4 or max(y1, y2) > 0.4:
+                check_feasible = False
+                continue
+            check_feasible = True
 
-def generate_scene_at_center(scene_type, num_objects):
-    z_default = 0.15
-    if scene_type=='random':
-        positions = 0.3*(np.random.rand(num_objects, 3) - 0.5)
-        positions[:, 2] = z_default
-    elif scene_type=='line':
-        distance_enough = False
-        while not distance_enough:
-            x1, x2, y1, y2 = 0.5 * (np.random.rand(4) - 0.5)
-            distance_enough = (np.linalg.norm([x1 - x2, y1 - y2]) > 0.3) \
-                                and (np.linalg.norm([x1 - x2, y1 - y2]) < 0.5)
         xs = np.linspace(x1, x2, num_objects)
         ys = np.linspace(y1, y2, num_objects)
         zs = np.ones(num_objects) * z_default + np.arange(num_objects) * 0.05
         positions = np.concatenate([xs, ys, zs]).reshape(3, num_objects).T
-    return positions
+        rotations = []
+    elif scene_type=='circle':
+        check_feasible = False
+        while not check_feasible:
+            radius = 0.15
+            x0, y0 = np.array(random_pos_on_table())[:2]
+            thetas = np.linspace(0, 1, num_objects+1)[:-1] + np.random.random()
+            thetas %= 1
+            thetas *= 2 * np.pi
+            xs = x0 + radius * np.cos(thetas)
+            ys = y0 + radius * np.sin(thetas)
+            zs = np.ones(num_objects) * z_default
+            if min(xs) < -0.3 or max(xs) > 0.3:
+                check_feasible = False
+                continue
+            if min(ys) < -0.4 or max(ys) > 0.4: 
+                check_feasible = False
+                continue
+            check_feasible = True
+        positions = np.concatenate([xs, ys, zs]).reshape(3, num_objects).T
+        rotations = []
+    return positions, rotations
 
 def get_rotation(roll, pitch, yaw):
     euler = roll, pitch, yaw
