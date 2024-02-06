@@ -90,8 +90,10 @@ def generate_scene_shape(scene_type, num_objects):
         while not check_feasible:
             xc, yc = np.array(random_pos_on_table())[:2]
             #x_hat = np.random.uniform(size=2) - 0.5
-            x_hat = np.random.choice([[1, 0], [0, 1], [-1, 0], [0, -1],
-                                      [1, 1], [-1, 1], [1, -1], [-1, -1]])
+            x_hats = [[1, 0], [0, 1], [-1, 0], [0, -1],
+                     [1, 1], [-1, 1], [-1, -1], [1, -1]]
+            s = np.random.choice(range(8))
+            x_hat = x_hats[s]
             x_hat /= np.linalg.norm(x_hat)
             x1, y1 = [xc, yc] - x_hat * 0.15 * num_objects/2
             x2, y2 = [xc, yc] + x_hat * 0.15 * num_objects/2
@@ -113,8 +115,13 @@ def generate_scene_shape(scene_type, num_objects):
         while not check_feasible:
             xc, yc = np.array(random_pos_on_table())[:2]
             #x_hat = np.random.uniform(size=2) - 0.5
-            x_hat = np.random.choice([[1, 0], [0, 1], [-1, 0], [0, -1],
-                                      [1, 1], [-1, 1], [1, -1], [-1, -1]])
+            x_hats = [[1, 0], [0, 1], [-1, 0], [0, -1],
+                     [1, 1], [-1, 1], [-1, -1], [1, -1]]
+            angles = [0., np.pi/2, np.pi, 3*np.pi/2,
+                      np.pi/4, 3*np.pi/4, 5*np.pi/4, 7*np.pi/4]
+            s = np.random.choice(range(8))
+            x_hat = x_hats[s]
+            angle = angles[s]
             x_hat /= np.linalg.norm(x_hat)
             x1, y1 = [xc, yc] - x_hat * 0.15 * num_objects/2
             x2, y2 = [xc, yc] + x_hat * 0.15 * num_objects/2
