@@ -839,7 +839,7 @@ if __name__=='__main__':
       
     ### use template ###
     if 'unseen' in [opt.scene_split, opt.object_split]:
-        opt.dataset = f'test-{opt.object_split}_obj-{opt.template_split}_template'
+        opt.dataset = f'test-{opt.object_split}_obj-{opt.scene_split}_template'
     else : 
         opt.dataset = 'train'
     template_folder = './templates'
