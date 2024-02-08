@@ -817,8 +817,8 @@ if __name__=='__main__':
     opt.num_traj = 20
     opt.num_combinations = 20
     opt.dataset = 'train' #'train' or 'test'
-    opt.object_split = 'seen' # 'unseen' or 'seen'
-    opt.scene_split = 'seen' # 'unseen' or 'seen'
+    opt.object_split = 'unseen' # 'unseen' or 'seen'
+    opt.scene_split = 'unseen' # 'unseen' or 'seen'
     opt.objectset = 'all' # 'pybullet' #'pybullet'/'ycb'/ 'housecat'/ 'all'
     # opt.pybullet_object_path = '/ssd/disk/pybullet-URDF-models/urdf_models/models'
     # opt.ycb_object_path = '/ssd/disk/YCB_dataset'
@@ -839,13 +839,14 @@ if __name__=='__main__':
       
     ### use template ###
     if 'unseen' in [opt.scene_split, opt.object_split]:
-        opt.dataset = f'test-{opt.object_type}_obj-{opt.template_type}_template'
+        opt.dataset = f'test-{opt.object_split}_obj-{opt.template_split}_template'
     else : 
         opt.dataset = 'train'
     template_folder = './templates'
     template_files = os.listdir(template_folder)
     template_files = [f for f in template_files if f.lower().endswith('.json')]
-    collect_scenes = ['B1','B3','B4','C5','C7','C8','C9','C10','C11','C12','C13','D1','D2','D3','D4','D9','D12','D13','D14','D15','D16'] 
+    # collect_scenes = ['B1','B3','B4','C5','C7','C8','C9','C10','C11','C12','C13','D1','D2','D3','D4','D9','D12','D13','D14','D15','D16'] 
+    collect_scenes = ['B2', 'B5',  'C4', 'C6', 'C12', 'D5', 'D8', 'D11', 'O3', 'O7' ]
     ts = TabletopScenes(opt, data_collect=True)
     for template_file in template_files:
         if template_file.split('_')[0] in collect_scenes:
