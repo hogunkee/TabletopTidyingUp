@@ -146,7 +146,8 @@ class TabletopScenes(object):
 
         # set the plane and table        
         planeID = p.loadURDF("plane.urdf")
-        table_id = p.loadURDF("table/table2.urdf", basePosition=[0.0,0.0,0.0], baseOrientation=[0.0,0.0,0.7071,0.7071])
+        table_id = p.loadURDF("table/table.urdf", basePosition=[0.0,0.0,0.0], baseOrientation=[0.0,0.0,0.7071,0.7071])
+        p.changeDynamics(table_id, -1, rollingFriction=0.01, spinningFriction=0.01)
         return
 
     def set_grid(self):
@@ -283,9 +284,10 @@ class TabletopScenes(object):
                 roll, pitch, yaw = roll * np.pi / 2, pitch * np.pi / 2, yaw * np.pi / 2
             rot = get_rotation(roll, pitch, yaw)
             obj_id = p.loadURDF(urdf_path, [self.xx[self.spawn_obj_num], self.yy[self.spawn_obj_num], 0.15], rot, globalScaling=scale) #5.
+            p.changeDynamics(obj_id, -1, rollingFriction=0.01, spinningFriction=0.01)
             for i in range(100):
                 p.stepSimulation()
-            pos,orn = p.getBasePositionAndOrientation(obj_id)
+            pos, orn = p.getBasePositionAndOrientation(obj_id)
             self.base_rot[obj_id] = orn
             
             posa, posb = p.getAABB(obj_id)
@@ -413,12 +415,12 @@ class TabletopScenes(object):
                 rot = self.base_rot[obj_id]
                 init_rotations.append(rot)
             else: # TODO: set object rotation as template's rotation or random rotation
-                rot = quaternion_multiply(init_rotations[idx], self.base_rot[obj_id]) if random else init_rotations[idx]
+                rot = quaternion_multiply(init_rotations[idx], self.base_rot[obj_id])
 
             move_object(obj_id, pos_sel, rot)        
 
             # calculate distance btw objects and repose objects
-            if self.opt.scene_type=='line':
+            if self.opt.scene_type.startswith('line'):
                 goal_dist = 0.02
                 if idx==0:
                     continue
@@ -794,17 +796,15 @@ class TabletopScenes(object):
         self.pickable_objects = obj_info['pickable_objects']
         with open(out_folder+"/obj_info.json", "w") as f:
             json.dump(obj_info, f)
-        
         return
-
-
+    
 
 
 if __name__=='__main__':
     opt = lambda : None
     opt.nb_objects = 15 #20
     opt.inscene_objects = 5 #7
-    opt.scene_type = 'random' # 'random' or 'line'
+    opt.scene_type = 'line' # 'random' or 'line'
     opt.spp = 32 #64 
     opt.width = 480
     opt.height = 360
@@ -820,16 +820,15 @@ if __name__=='__main__':
     opt.object_split = 'seen' # 'unseen' or 'seen'
     opt.scene_split = 'seen' # 'unseen' or 'seen'
     opt.objectset = 'all' # 'pybullet' #'pybullet'/'ycb'/ 'housecat'/ 'all'
-    # opt.pybullet_object_path = '/ssd/disk/pybullet-URDF-models/urdf_models/models'
-    # opt.ycb_object_path = '/ssd/disk/YCB_dataset'
-    # opt.housecat_object_path = '/ssd/disk/housecat6d/obj_models_small_size_final'
-    opt.ig_object_path = '/ssd/disk/ig_dataset/objects'
+    opt.pybullet_object_path = '/ssd/disk/pybullet-URDF-models/urdf_models/models'
+    opt.ycb_object_path = '/ssd/disk/YCB_dataset'
+    opt.housecat_object_path = '/ssd/disk/housecat6d/obj_models_small_size_final'
     # opt.pybullet_object_path = '/home/wooseoko/workspace/hogun/pybullet_scene_gen/TabletopTidyingUp/pybullet-URDF-models/urdf_models/models'
-    opt.pybullet_object_path = '/home/brain2/workspace/TabletopTidyingUp/pybullet-URDF-models/urdf_models/models'
     # opt.ycb_object_path = '/home/wooseoko/workspace/hogun/pybullet_scene_gen/YCB_dataset'
-    opt.ycb_object_path = '/home/brain2/workspace/ycb_dataset'
     # opt.housecat_object_path = '/home/wooseoko/workspace/hogun/pybullet_scene_gen/TabletopTidyingUp/housecat6d/obj_models_small_size_final'
-    opt.housecat_object_path = '/home/brain2/workspace/housecat6d/obj_models_small_size_final'
+    # opt.pybullet_object_path = '/home/brain2/workspace/TabletopTidyingUp/pybullet-URDF-models/urdf_models/models'
+    # opt.ycb_object_path = '/home/brain2/workspace/ycb_dataset'
+    # opt.housecat_object_path = '/home/brain2/workspace/housecat6d/obj_models_small_size_final'
 
     if os.path.isdir(opt.out_folder):
         print(f'folder {opt.out_folder}/ exists')
@@ -915,7 +914,6 @@ if __name__=='__main__':
     #                 if not success_placement:
     #                     continue
     #             scene_id['frame'] += 1
-                
     #             cnt = 0
     #             # 2. Move each object to a random place #
     #             while scene_id['frame'] < int(opt.nb_frames): #
