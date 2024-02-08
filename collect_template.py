@@ -46,12 +46,12 @@ class TemplateCollector():
         self.test_scenes = ['D5', 'D8', 'D11', 'O3', 'O7', 'B2', 'B5', 'C4', 'C6', 'C12']
         
         # self.pybullet_object_path = './pybullet-URDF-models/urdf_models/models'
-        self.pybullet_object_path = '/home/brain2/workspace/TabletopTidyingUp/pybullet-URDF-models/urdf_models/models'
+        self.pybullet_object_path = '/home/wooseoko/workspace/hogun/pybullet_scene_gen/TabletopTidyingUp/pybullet-URDF-models/urdf_models/models'
         # self.ycb_object_path = './YCB_dataset'
-        self.ycb_object_path = '/home/brain2/workspace/ycb_dataset'
-        self.ig_object_path = './ig_dataset/objects'
+        self.ycb_object_path = '/home/wooseoko/workspace/hogun/pybullet_scene_gen/YCB_dataset'
+        # self.ig_object_path = './ig_dataset/objects'
         # self.housecat_object_path = './housecat6d/obj_models_small_size_final'
-        self.housecat_object_path = '/home/brain2/workspace/obj_models/obj_models_small_size_final'
+        self.housecat_object_path = '/home/wooseoko/workspace/hogun/pybullet_scene_gen/TabletopTidyingUp/housecat6d/obj_models_small_size_final'
 
         
         self.templates = {
@@ -574,11 +574,11 @@ class TemplateCollector():
 
 
 if __name__ == "__main__":
-    save_folder = './templates'
+    save_folder = './new_templates'
     collector = TemplateCollector(save_folder)
     
     # saved_scene_list = collector.check_saved_scene_and_templates()
-    collect_scene_names = ['B2','B3','B8','C1','C6','C8','C10','C14','D3','D4','D5','D8','D9','D10','O5','O6','O7','O13']
+    collect_scene_names = ['D12', 'D13']
     # 호건 : ['D1','D6', 'D12', 'D14', 'D15', 'O1','O4','O9', 'O11', 'O14','B6','B7','C2','C4','C5','C9', 'C11']
     # 우석 : ['D2','D7', 'D11', 'D13', 'D16','O2','O3','O8', 'O10', 'O12', 'B3','B5','C3','C7', 'C12', 'C14']
     # 나경 : ['D3','D4','D5','D8','D9', 'D10','O5','O6','O7', 'O13','B1','B2','B3','B8','C1','C6','C8', 'C10', 'C14']

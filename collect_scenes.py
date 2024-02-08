@@ -823,13 +823,13 @@ if __name__=='__main__':
     # opt.pybullet_object_path = '/ssd/disk/pybullet-URDF-models/urdf_models/models'
     # opt.ycb_object_path = '/ssd/disk/YCB_dataset'
     # opt.housecat_object_path = '/ssd/disk/housecat6d/obj_models_small_size_final'
-    opt.ig_object_path = '/ssd/disk/ig_dataset/objects'
-    # opt.pybullet_object_path = '/home/wooseoko/workspace/hogun/pybullet_scene_gen/TabletopTidyingUp/pybullet-URDF-models/urdf_models/models'
-    opt.pybullet_object_path = '/home/brain2/workspace/TabletopTidyingUp/pybullet-URDF-models/urdf_models/models'
-    # opt.ycb_object_path = '/home/wooseoko/workspace/hogun/pybullet_scene_gen/YCB_dataset'
-    opt.ycb_object_path = '/home/brain2/workspace/ycb_dataset'
-    # opt.housecat_object_path = '/home/wooseoko/workspace/hogun/pybullet_scene_gen/TabletopTidyingUp/housecat6d/obj_models_small_size_final'
-    opt.housecat_object_path = '/home/brain2/workspace/housecat6d/obj_models_small_size_final'
+    # opt.ig_object_path = '/ssd/disk/ig_dataset/objects'
+    opt.pybullet_object_path = '/home/wooseoko/workspace/hogun/pybullet_scene_gen/TabletopTidyingUp/pybullet-URDF-models/urdf_models/models'
+    # opt.pybullet_object_path = '/home/brain2/workspace/TabletopTidyingUp/pybullet-URDF-models/urdf_models/models'
+    opt.ycb_object_path = '/home/wooseoko/workspace/hogun/pybullet_scene_gen/YCB_dataset'
+    # opt.ycb_object_path = '/home/brain2/workspace/ycb_dataset'
+    opt.housecat_object_path = '/home/wooseoko/workspace/hogun/pybullet_scene_gen/TabletopTidyingUp/housecat6d/obj_models_small_size_final'
+    # opt.housecat_object_path = '/home/brain2/workspace/housecat6d/obj_models_small_size_final'
 
     if os.path.isdir(opt.out_folder):
         print(f'folder {opt.out_folder}/ exists')
