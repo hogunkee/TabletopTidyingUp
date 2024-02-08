@@ -72,7 +72,7 @@ class TemplateCollector():
         p.setTimeStep(1 / 240)
 
         planeID = p.loadURDF("plane.urdf")
-        table_id = p.loadURDF("table/table2.urdf", basePosition=[0.0,0.0,0.0], baseOrientation=[0.0,0.0,0.7071,0.7071])
+        table_id = p.loadURDF("table/table.urdf", basePosition=[0.0,0.0,0.0], baseOrientation=[0.0,0.0,0.7071,0.7071])
 
         # start simulation
         for i in range(100):

@@ -77,3 +77,36 @@ opt.object_split = 'seen' # 'unseen' or 'seen'
 opt.scene_split = 'seen' # 'unseen' or 'seen'
 
 collect_scenes에 수집할 scene들을 list로 입력해서 해당 scene에 대해서 정해진 option으로 데이터 수집.
+
+train (object : seen, template : seen)의 경우에는 opt.num_combinations = 20으로 설정, 
+
+test (unseen, seen)의 경우에는 opt.num_combinations = 5
+
+test (unseen, unseen)의 경우에는 opt.num_combinations = 5
+
+test (seen, unseen)의 경우에는 opt.num_combinations = 10, 수집하는 while문을 traj_id < opt.num_combinations * 3으로 변경
+
+---
+
+wooseoko (train 2/3, unseen-unseen 수집)
+
+train : [B1,B3,B4,C5,C7,C8,C9,C10,C11,C12,C13,D1,D2,D3,D4,D9,D12,D13,D14,D15,D16 \/ O1,O2,O4,O5,O6,O8,O9,O11,O12,O13]
+
+test(unseen scenes) : [B2, B5,  C4, C6, C12, D5, D8, D11, O3, O7]
+
+unseen-unseen : 모든 unseen template에 대해서.
+
+---
+
+Hogun (train 1/3, unseen-seen, seen-unseen 수집)
+
+train : [B6,B7,B8, C1,C2,C3, C14, D6, D7, D10, O10 ] 
+
+test(unseen scenes) : [B2, B5,  C4, C6, C12, D5, D8, D11, O3, O7]
+
+unseen-seen : 모든 template에 대해서.
+
+seen-unseen : 모든 unseen template에 대해서.
+
+총 413 templates. train 324, test 89
+

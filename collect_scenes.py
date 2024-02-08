@@ -146,7 +146,8 @@ class TabletopScenes(object):
 
         # set the plane and table        
         planeID = p.loadURDF("plane.urdf")
-        table_id = p.loadURDF("table/table2.urdf", basePosition=[0.0,0.0,0.0], baseOrientation=[0.0,0.0,0.7071,0.7071])
+        table_id = p.loadURDF("table/table.urdf", basePosition=[0.0,0.0,0.0], baseOrientation=[0.0,0.0,0.7071,0.7071])
+        p.changeDynamics(table_id, -1, rollingFriction=0.01, spinningFriction=0.01)
         return
 
     def set_grid(self):
@@ -283,9 +284,10 @@ class TabletopScenes(object):
                 roll, pitch, yaw = roll * np.pi / 2, pitch * np.pi / 2, yaw * np.pi / 2
             rot = get_rotation(roll, pitch, yaw)
             obj_id = p.loadURDF(urdf_path, [self.xx[self.spawn_obj_num], self.yy[self.spawn_obj_num], 0.15], rot, globalScaling=scale) #5.
+            p.changeDynamics(obj_id, -1, rollingFriction=0.01, spinningFriction=0.01)
             for i in range(100):
                 p.stepSimulation()
-            pos,orn = p.getBasePositionAndOrientation(obj_id)
+            pos, orn = p.getBasePositionAndOrientation(obj_id)
             self.base_rot[obj_id] = orn
             
             posa, posb = p.getAABB(obj_id)
@@ -413,12 +415,12 @@ class TabletopScenes(object):
                 rot = self.base_rot[obj_id]
                 init_rotations.append(rot)
             else: # TODO: set object rotation as template's rotation or random rotation
-                rot = quaternion_multiply(init_rotations[idx], self.base_rot[obj_id]) if random else init_rotations[idx]
+                rot = quaternion_multiply(init_rotations[idx], self.base_rot[obj_id])
 
             move_object(obj_id, pos_sel, rot)        
 
             # calculate distance btw objects and repose objects
-            if self.opt.scene_type=='line':
+            if self.opt.scene_type.startswith('line'):
                 goal_dist = 0.02
                 if idx==0:
                     continue
@@ -794,17 +796,15 @@ class TabletopScenes(object):
         self.pickable_objects = obj_info['pickable_objects']
         with open(out_folder+"/obj_info.json", "w") as f:
             json.dump(obj_info, f)
-        
         return
-
-
+    
 
 
 if __name__=='__main__':
     opt = lambda : None
     opt.nb_objects = 15 #20
     opt.inscene_objects = 5 #7
-    opt.scene_type = 'random' # 'random' or 'line'
+    opt.scene_type = 'line' # 'random' or 'line'
     opt.spp = 32 #64 
     opt.width = 480
     opt.height = 360
@@ -812,7 +812,7 @@ if __name__=='__main__':
     opt.mess_grid = True
     opt.nb_frames = 5 #7
     # opt.out_folder = '/ssd/disk/ur5_tidying_data/template-test/'
-    opt.out_folder = '/home/wooseoko/workspace/hogun/pybullet_scene_gen/TabletopTidyingUp/dataset'
+    opt.out_folder = '/home/wooseoko/workspace/hogun/pybullet_scene_gen/TabletopTidyingUp/dataset_template'
     opt.nb_randomset = 200
     opt.num_traj = 20
     opt.num_combinations = 20
@@ -845,7 +845,7 @@ if __name__=='__main__':
     template_folder = './templates'
     template_files = os.listdir(template_folder)
     template_files = [f for f in template_files if f.lower().endswith('.json')]
-    collect_scenes = ['D1','D2','D6','D7','D12','D13','D14','D15','D16','O1','O2','O4','O8','O9','O10','O11','O12','O14','B3','B6','B7','C2','C3','C5','C7','C9','C11','C14']
+    collect_scenes = ['B1','B3','B4','C5','C7','C8','C9','C10','C11','C12','C13','D1','D2','D3','D4','D9','D12','D13','D14','D15','D16'] 
     ts = TabletopScenes(opt, data_collect=True)
     for template_file in template_files:
         if template_file.split('_')[0] in collect_scenes:
@@ -915,7 +915,6 @@ if __name__=='__main__':
     #                 if not success_placement:
     #                     continue
     #             scene_id['frame'] += 1
-                
     #             cnt = 0
     #             # 2. Move each object to a random place #
     #             while scene_id['frame'] < int(opt.nb_frames): #
