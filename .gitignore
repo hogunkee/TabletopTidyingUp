@@ -2,6 +2,7 @@ __pycache__/
 .idea/
 pyb_env/
 dataset/
+dataset_template/
 .vscode/
 render/
 ig_dataset/
