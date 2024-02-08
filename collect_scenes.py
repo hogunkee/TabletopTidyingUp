@@ -541,7 +541,7 @@ class TabletopScenes(object):
             while True:
                 is_good = True
                 random_pos_diff = np.random.uniform(-0.15, 0.15,  2)
-                random_scaling = np.random.uniform(0.7, 1.1)
+                random_scaling = np.random.uniform(0.8, 1.1)
                 pos_diff = {}
                 for obj_id in objects:
                     pos_x = (final_poses[obj_id][0] - mean_pos_x) * random_scaling + mean_pos_x + random_pos_diff[0]
