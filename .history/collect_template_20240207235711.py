@@ -578,7 +578,8 @@ if __name__ == "__main__":
     collector = TemplateCollector(save_folder)
     
     # saved_scene_list = collector.check_saved_scene_and_templates()
-    collect_scene_names = ['B2','B3','B8','C1','C6','C8','C10','C14','D3','D4','D5','D8','D9','D10','O5','O6','O7','O13']
+    # collect_scene_names = ['D3','D4','D5','D8','D9', 'D10','O5','O6','O7', 'O13','B1','B2','B3','B8','C1','C6','C8', 'C10', 'C14']
+    collect_scene_names = ['B2','B3','B8','C1','C6','C8','C10','C14','D3','D4','D5','D8','D9', 'D10','O5','O6','O7', 'O13']
     # 호건 : ['D1','D6', 'D12', 'D14', 'D15', 'O1','O4','O9', 'O11', 'O14','B6','B7','C2','C4','C5','C9', 'C11']
     # 우석 : ['D2','D7', 'D11', 'D13', 'D16','O2','O3','O8', 'O10', 'O12', 'B3','B5','C3','C7', 'C12', 'C14']
     # 나경 : ['D3','D4','D5','D8','D9', 'D10','O5','O6','O7', 'O13','B1','B2','B3','B8','C1','C6','C8', 'C10', 'C14']
