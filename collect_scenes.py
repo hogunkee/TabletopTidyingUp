@@ -541,7 +541,7 @@ class TabletopScenes(object):
             while True:
                 is_good = True
                 random_pos_diff = np.random.uniform(-0.15, 0.15,  2)
-                random_scaling = np.random.uniform(0.8, 1.1)
+                random_scaling = np.random.uniform(0.9, 1.1)
                 pos_diff = {}
                 for obj_id in objects:
                     pos_x = (final_poses[obj_id][0] - mean_pos_x) * random_scaling + mean_pos_x + random_pos_diff[0]
@@ -815,7 +815,7 @@ if __name__=='__main__':
     opt.out_folder = '/home/wooseoko/workspace/hogun/pybullet_scene_gen/TabletopTidyingUp/dataset_template'
     opt.nb_randomset = 200
     opt.num_traj = 20
-    opt.num_combinations = 20
+    opt.num_combinations = 5
     opt.dataset = 'train' #'train' or 'test'
     opt.object_split = 'unseen' # 'unseen' or 'seen'
     opt.scene_split = 'unseen' # 'unseen' or 'seen'
@@ -846,7 +846,8 @@ if __name__=='__main__':
     template_files = os.listdir(template_folder)
     template_files = [f for f in template_files if f.lower().endswith('.json')]
     # collect_scenes = ['B1','B3','B4','C5','C7','C8','C9','C10','C11','C12','C13','D1','D2','D3','D4','D9','D12','D13','D14','D15','D16'] 
-    collect_scenes = ['B2', 'B5',  'C4', 'C6', 'C12', 'D5', 'D8', 'D11', 'O3', 'O7' ]
+    # collect_scenes = ['B2', 'B5',  'C4', 'C6', 'C12', 'D5', 'D8', 'D11', 'O3', 'O7' ]
+    collect_scenes = ['C12', 'O7' ]
     ts = TabletopScenes(opt, data_collect=True)
     for template_file in template_files:
         if template_file.split('_')[0] in collect_scenes:
