@@ -1,0 +1,5 @@
+tensorboard==2.3
+scipy
+open3d>=0.8
+Pillow
+tqdm
