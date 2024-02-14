@@ -28,7 +28,10 @@ class TabletopScenes(object):
         nv.initialize(headless=True, lazy_updates=True) # headless=False
 
         # Setup bullet physics stuff
-        physicsClient = p.connect(p.GUI) # non-graphical version
+        if opt.gui_on:
+            physicsClient = p.connect(p.GUI)
+        else:
+            physicsClient = p.connect(p.DIRECT)
 
         # Create a camera
         self.camera_top = None
@@ -279,8 +282,8 @@ class TabletopScenes(object):
             roll, pitch, yaw = 0, 0, 0
             if urdf_id in self.init_euler:
                 roll, pitch, yaw, scale = np.array(self.init_euler[urdf_id])
-                if size == 'large': scale = scale * 1.2
-                elif size == 'small': scale = scale * 0.7
+                if size == 'large': scale = scale * 1.1
+                elif size == 'small': scale = scale * 0.9
                 roll, pitch, yaw = roll * np.pi / 2, pitch * np.pi / 2, yaw * np.pi / 2
             rot = get_rotation(roll, pitch, yaw)
             obj_id = p.loadURDF(urdf_path, [self.xx[self.spawn_obj_num], self.yy[self.spawn_obj_num], 0.15], rot, globalScaling=scale) #5.
@@ -479,13 +482,14 @@ class TabletopScenes(object):
         self.spawn_objects(spawn_list)
         pybullet_ids = copy.deepcopy(self.current_pybullet_ids)
 
+        key_list = list(self.objects_list.keys())
+        value_list = list(self.objects_list.values())
         for action in templates['action_order']:
             action_type, obj_id, pos, rot = action
             if action_type == 0: # spawn
                 obj = template_id_to_obj[obj_id]
-                key_list = list(self.objects_list.keys())
-                value_list = list(self.objects_list.values())
                 sim_obj_id = key_list[value_list.index(obj)]
+                value_list[value_list.index(obj)] = None
                 template_id_to_sim_id[obj_id] = sim_obj_id
                 data_objects_list[sim_obj_id] = self.objects_list[sim_obj_id]
                 spawn_rot = quaternion_multiply(rot, self.base_rot[sim_obj_id])
@@ -810,8 +814,9 @@ if __name__=='__main__':
     opt.height = 360
     opt.noise = False
     opt.mess_grid = True
+    opt.gui_on = False
     opt.nb_frames = 5 #7
-    # opt.out_folder = '/ssd/disk/ur5_tidying_data/template-test/'
+    # opt.out_folder = '/ssd/disk/TableTidyingUp/dataset_template/'
     opt.out_folder = '/home/wooseoko/workspace/hogun/pybullet_scene_gen/TabletopTidyingUp/dataset_template'
     opt.nb_randomset = 200
     opt.num_traj = 20
@@ -823,12 +828,11 @@ if __name__=='__main__':
     # opt.pybullet_object_path = '/ssd/disk/pybullet-URDF-models/urdf_models/models'
     # opt.ycb_object_path = '/ssd/disk/YCB_dataset'
     # opt.housecat_object_path = '/ssd/disk/housecat6d/obj_models_small_size_final'
-    # opt.ig_object_path = '/ssd/disk/ig_dataset/objects'
     opt.pybullet_object_path = '/home/wooseoko/workspace/hogun/pybullet_scene_gen/TabletopTidyingUp/pybullet-URDF-models/urdf_models/models'
-    # opt.pybullet_object_path = '/home/brain2/workspace/TabletopTidyingUp/pybullet-URDF-models/urdf_models/models'
     opt.ycb_object_path = '/home/wooseoko/workspace/hogun/pybullet_scene_gen/YCB_dataset'
-    # opt.ycb_object_path = '/home/brain2/workspace/ycb_dataset'
     opt.housecat_object_path = '/home/wooseoko/workspace/hogun/pybullet_scene_gen/TabletopTidyingUp/housecat6d/obj_models_small_size_final'
+    # opt.pybullet_object_path = '/home/brain2/workspace/TabletopTidyingUp/pybullet-URDF-models/urdf_models/models'
+    # opt.ycb_object_path = '/home/brain2/workspace/ycb_dataset'
     # opt.housecat_object_path = '/home/brain2/workspace/housecat6d/obj_models_small_size_final'
 
     if os.path.isdir(opt.out_folder):
@@ -846,8 +850,7 @@ if __name__=='__main__':
     template_files = os.listdir(template_folder)
     template_files = [f for f in template_files if f.lower().endswith('.json')]
     # collect_scenes = ['B1','B3','B4','C5','C7','C8','C9','C10','C11','C12','C13','D1','D2','D3','D4','D9','D12','D13','D14','D15','D16'] 
-    # collect_scenes = ['B2', 'B5',  'C4', 'C6', 'C12', 'D5', 'D8', 'D11', 'O3', 'O7' ]
-    collect_scenes = ['C12', 'O7' ]
+    collect_scenes = ['B2', 'B5',  'C4', 'C6', 'C12', 'D5', 'D8', 'D11', 'O3', 'O7' ]
     ts = TabletopScenes(opt, data_collect=True)
     for template_file in template_files:
         if template_file.split('_')[0] in collect_scenes:
