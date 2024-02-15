@@ -17,7 +17,7 @@ from scene_utils import get_contact_objects, get_rotation, get_velocity
 from scene_utils import cal_distance, check_on_table, generate_scene_random, generate_scene_shape, get_init_euler, get_random_pos_from_grid, get_random_pos_orn, move_object, pickable_objects_list, quaternion_multiply, random_pos_on_table
 
 from utilities import Models, setup_sisbot, setup_sisbot_force, Camera
-from collect_template_list import cat_to_name_test, cat_to_name_train
+from collect_template_list import cat_to_name_test, cat_to_name_train, cat_to_name_inference
 from graspnet_baseline.grasp_infer import GraspNetInfer
 
 class FailToReachTargetError(RuntimeError):
@@ -72,7 +72,10 @@ class TableTopTidyingUpEnv:
                     self.cat_to_name[cat].append(cat_to_name_train[cat][0])
         else:
             self.cat_to_name = cat_to_name_train
-        
+
+        for cat in self.cat_to_name.keys():
+            if cat in cat_to_name_inference:
+                self.cat_to_name[cat] = cat_to_name_inference[cat]
 
             
         self.obj_name_to_semantic_label = {}
@@ -241,7 +244,7 @@ class TableTopTidyingUpEnv:
             rot = get_rotation(roll, pitch, yaw)
             
             obj_id = p.loadURDF(urdf_path, [self.xx[self.spawn_obj_num], self.yy[self.spawn_obj_num], 0.15], rot, globalScaling=scale) #5.
-            p.changeDynamics(obj_id, -1, rollingFriction=0.01, spinningFriction=0.01, restitution=0.01)
+            p.changeDynamics(obj_id, -1, rollingFriction=0.01, spinningFriction=0.01, restitution=0.01, lateralFriction=0.5)
             for i in range(100):
                 p.stepSimulation()
             pos, orn = p.getBasePositionAndOrientation(obj_id)

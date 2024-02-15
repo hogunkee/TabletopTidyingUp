@@ -107,3 +107,12 @@ cat_to_name_test = {
 	'timer': [],
 	'toothpaste': [],
 }
+
+cat_to_name_inference = {
+	'fork': ['housecat/inference-fork_1', 'housecat/inference-fork_1_new', 'housecat/inference-fork_2_new', 'housecat/inference-fork_3_new'],
+	'knife': ['housecat/inference-knife_1', 'housecat/inference-knife_2', 'housecat/inference-knife_1_new', 'housecat/inference-knife_2_new', 'housecat/inference-knife_3_new'],
+	'spoon': ['housecat/inference-spoon_1', 'housecat/inference-spoon_2', 'housecat/inference-spoon_1_new', 'housecat/inference-spoon_2_new', 'housecat/inference-spoon_3_new', 'housecat/inference-spoon_4_new', 'housecat/inference-spoon_5_new', 'housecat/inference-spoon_6_new'],
+        'marker': ['pybullet/inference_large_marker', 'pybullet/inference_blue_marker', 'pybullet/inference_black_marker', 'pybullet/inference_red_marker', 'pybullet/inference_small_marker'],
+	'plate': ['pybullet/inference_plate', 'pybullet/inference_round_plate_1', 'pybullet/inference_round_plate_2', 'pybullet/inference_round_plate_3', 'pybullet/inference_round_plate_4', 'pybullet/inference_square_plate_1', 'pybullet/inference_square_plate_2', 'pybullet/inference_square_plate_3', 'pybullet/inference_square_plate_4', 'pybullet/inference_blue_plate', 'pybullet/inference_grey_plate'],
+	'soap_dish': ['pybullet/inference_soap_dish'],
+}

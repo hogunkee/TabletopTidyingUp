@@ -45,11 +45,14 @@ def user_control_demo():
     # camera_top = Camera_front_top((0.5, 0, 1.3), 0.02, 2, (480, 360), 60)
     
     objects_info = { 'paths': {
-            'pybullet_object_path' : '/home/wooseoko/workspace/hogun/pybullet_scene_gen/TabletopTidyingUp/pybullet-URDF-models/urdf_models/models',
-            'ycb_object_path' : '/home/wooseoko/workspace/hogun/pybullet_scene_gen/YCB_dataset',
-            'housecat_object_path' : '/home/wooseoko/workspace/hogun/pybullet_scene_gen/TabletopTidyingUp/housecat6d/obj_models_small_size_final',
+            #'pybullet_object_path' : '/home/wooseoko/workspace/hogun/pybullet_scene_gen/TabletopTidyingUp/pybullet-URDF-models/urdf_models/models',
+            #'ycb_object_path' : '/home/wooseoko/workspace/hogun/pybullet_scene_gen/YCB_dataset',
+            #'housecat_object_path' : '/home/wooseoko/workspace/hogun/pybullet_scene_gen/TabletopTidyingUp/housecat6d/obj_models_small_size_final',
+            'pybullet_object_path' : '/ssd/disk/pybullet-URDF-models/urdf_models/models',
+            'ycb_object_path' : '/ssd/disk/YCB_dataset',
+            'housecat_object_path' : '/ssd/disk/housecat6d/obj_models_small_size_final',
         },
-        'split' : 'train'
+        'split' : 'inference' #'train'
     }
     
 
@@ -58,12 +61,82 @@ def user_control_demo():
     p.configureDebugVisualizer(p.COV_ENABLE_SHADOWS, 1)  # Shadows on/off
     p.addUserDebugLine([0, -0.5, 0], [0, -0.5, 1.1], [0, 1, 0])
 
-    objects = [('fork', 'medium'), ('knife','medium'), ('plate','medium')]
+    objects = [('fork', 'medium'), ('knife','medium'), ('plate','medium'), ('marker', 'medium'), ('soap_dish', 'medium')]
     
 
     env.reset()
     env.spawn_objects(objects)
     env.arrange_objects(random = True)
+
+    ## Test new urdf models for inference ##
+    if True:
+        obj_info = env.obj_info
+        for o in obj_info['objects']:
+            # get object info
+            obj_info = env.obj_info
+            object_name = obj_info['objects'][o]
+            size = obj_info['sizes'][o]
+            label = obj_info['semantic_label'][o]
+            state = obj_info['state'][o]
+            obj_pose, obj_quat = state
+            # find grasp orientation
+            roll, pitch = 0, np.pi/2
+            yaw = p.getEulerFromQuaternion(obj_quat)[2]
+            orn = p.getQuaternionFromEuler([roll, pitch, yaw])
+            # find grasp position
+            x, y = obj_pose[:2]
+            z = 0.8 #0.79
+            if label.startswith('plate'):
+                # plate
+                if 'inference_round_plate' in object_name:
+                    radius = 0.07
+                elif 'inference_plate' in object_name:
+                    radius = 0.12
+                elif 'inference_blue_plate' in object_name:
+                    radius = 0.08
+                else:
+                    radius = 0.07
+                if size=='large':
+                    radius *= 1.1
+                elif size=='small':
+                    radius *= 0.9
+                if np.random.random() > 0.5:
+                    x += radius * np.sin(yaw)
+                    y -= radius * np.cos(yaw)
+                else:
+                    x -= radius * np.sin(yaw)
+                    y += radius * np.cos(yaw)
+                z += 0.01
+            elif label.startswith('soap_dish'):
+                # soap dish
+                radius = 0.06
+                if size=='large':
+                    radius *= 1.1
+                elif size=='small':
+                    radius *= 0.9
+                if np.random.random() > 0.5:
+                    x += radius * np.sin(yaw)
+                    y -= radius * np.cos(yaw)
+                else:
+                    x -= radius * np.sin(yaw)
+                    y += radius * np.cos(yaw)
+                z += 0.02
+            # move to the pre-grasp pose
+            env.move_ee((x, y, z+0.2, orn))
+            env.move_ee((x, y, z+0.1, orn))
+            # move to the grasp pose
+            env.move_ee((x, y, z, orn), custom_velocity=0.05)
+            env.close_gripper()
+            # move to the pre-grasp pose
+            env.move_ee((x, y, z+0.2, orn), custom_velocity=0.05)
+            # move to the random place
+            tx, ty = (np.random.random(2)-0.5) * 0.8
+            env.move_ee((tx, ty, 1.0, orn))
+            env.move_ee((tx, ty, 0.9, orn))
+            # place the object
+            env.open_gripper()
+
+        
     
     while True:
         # select pick object
