@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 from matplotlib import pyplot as plt
 import numpy as np
 import open3d as o3d
@@ -7,6 +8,7 @@ import argparse
 import importlib
 import scipy.io as scio
 from PIL import Image
+from scipy.spatial.transform import Rotation as R
 
 import torch
 from graspnetAPI import GraspGroup
@@ -43,7 +45,7 @@ def vis_grasps(gg, cloud):
 class GraspNetInfer:
     def __init__(self):
         self.checkpoint_path = ROOT_DIR + '/checkpoints' + '/checkpoint-rs.tar'
-        self.num_point = 20000
+        self.num_point = 40000
         self.num_view = 300
         self.collision_thresh = 0.01
         self.voxel_size = 0.01
@@ -68,15 +70,30 @@ class GraspNetInfer:
     def infer(self, rgb, d, mask, obj_id):
         end_points, cloud = self.process_data(rgb, d, mask, obj_id)
         gg = get_grasps(self.net, end_points)
+        gg_new_array = []
         if self.collision_thresh > 0:
             gg = self.collision_detection(gg, np.array(cloud.points))
-        # gg.nms()
-        # gg.sort_by_score()
-        # gg = gg[:3]
             
-        vis_grasps(gg, cloud)
+        rot_thres = 1
         
-        pass
+        for i in range(len(gg)):
+            r = R.from_matrix(gg.rotation_matrices[i])
+            yaw, pitch, roll = r.as_euler('zyx')
+            err1 = abs(yaw - np.pi/2)**2 + abs(roll - np.pi/2)**2
+            err2 = abs(yaw + np.pi/2)**2 + abs(roll - np.pi/2)**2
+            err3 = abs(yaw - np.pi/2)**2 + abs(roll + np.pi/2)**2
+            err4 = abs(yaw + np.pi/2)**2 + abs(roll + np.pi/2)**2
+            print(err1, err2, err3, err4)
+
+            if err1 < rot_thres or err2 < rot_thres or err3 < rot_thres or err4 < rot_thres:
+                gg_new_array.append(gg.grasp_group_array[i])            
+
+        gg.nms()
+        gg.sort_by_score()
+        gg = gg[:1]
+        
+        vis_grasps(gg, cloud)
+        return gg
 
     def process_data(self,rgb,d,mask_, obj_id):
         # load data
@@ -84,7 +101,6 @@ class GraspNetInfer:
         color = color.astype(np.float32)
         color = color[:,:,:3]
         depth = d 
-        print(depth)
 
         factor_depth = 1
 
@@ -93,13 +109,21 @@ class GraspNetInfer:
         cloud = create_point_cloud_from_depth_image(depth, camera, organized=True)
 
         # get valid points
-        mask = depth>0
-        plt.imshow(depth)
-        plt.show()
+        mask = np.zeros_like(mask_, dtype=bool)
+        mask_true = np.where(mask_ == obj_id)
+        # y_max, y_min = np.max(mask_true[0]), np.min(mask_true[0])
+        # x_max, x_min = np.max(mask_true[1]), np.min(mask_true[1])
+        # y_max = min(y_max+15, mask_.shape[0])
+        # x_max = min(x_max+15, mask_.shape[1])
+        # y_min = max(y_min-15, 0)
+        # x_min = max(x_min-15, 0)
+        mask = mask_ == obj_id
+        # mask[y_min:y_max, x_min:x_max] = True
+        
+        # mask = depth>0
         
         cloud_masked = cloud[mask]
         color_masked = color[mask]
-        print('color_masked : ', color_masked.shape)
         # sample points
         if len(cloud_masked) >= self.num_point:
             idxs = np.random.choice(len(cloud_masked), self.num_point, replace=False)

@@ -61,7 +61,7 @@ def get_init_euler():
     return init_euler
 
 def get_random_pos_from_grid():
-    x = np.linspace(-0.3, 0.3, 4)
+    x = np.linspace(-0.2, 0.3, 4)
     y = np.linspace(-0.4, 0.4, 6)
     z = np.linspace(0.8, 1.0, 2)
     pos = (np.random.choice(x), np.random.choice(y), np.random.choice(z))

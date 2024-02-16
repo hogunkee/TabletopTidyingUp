@@ -230,7 +230,8 @@ class Camera:
         _projection_matrix = np.array(self.projection_matrix).reshape((4, 4), order='F')
         self.tran_pix_world = np.linalg.inv(_projection_matrix @ _view_matrix)
 
-    def rgbd_2_world(self, w, h, d):
+    def rgbd_2_world(self, h, w):
+        d = self.origin_depth[h, w]
         x = (2 * w - self.width) / self.width
         y = -(2 * h - self.height) / self.height
         z = 2 * d - 1
@@ -240,15 +241,27 @@ class Camera:
 
         return position[:3]
 
+
+    
+    def camera_rotation_matrix(self):
+        pointing_direction = np.array([0, 0, 0.3]) - np.array([self.x, self.y, self.z]) 
+        up_vector = np.array([-1,0,0])
+        forward = pointing_direction / np.linalg.norm(pointing_direction)
+        right = np.cross(forward, up_vector)
+        right /= np.linalg.norm(right) + 1e-8
+        up = np.cross(forward, right)
+        up /= np.linalg.norm(up) + 1e-8
+        return np.column_stack((right, up, forward))
+    
     def shot(self):
         # Get depth values using the OpenGL renderer
         _w, _h, rgb, depth, seg = p.getCameraImage(self.width, self.height,
                                                    self.view_matrix, self.projection_matrix,shadow=True,renderer=p.ER_TINY_RENDERER
                                                    )
-        depth = 2 * depth - 1
-        depth = 2 * self.near * self.far / (self.far + self.near - (2 * depth - 1) * (self.far - self.near))
+        self.origin_depth = depth
+        depth = self.far * self.near / (self.far - (self.far - self.near) * depth)
         return rgb, depth, seg
-
+    
     def rgbd_2_world_batch(self, depth):
         x = (2 * np.arange(0, self.width) - self.width) / self.width
         x = np.repeat(x[None, :], self.height, axis=0)
@@ -278,12 +291,13 @@ class Camera_front_top:
                                                [0, 0, 0.3],
                                                [0, 0, 1])
         self.projection_matrix = p.computeProjectionMatrixFOV(self.fov, aspect, self.near, self.far)
-
+        print(self.projection_matrix)
         _view_matrix = np.array(self.view_matrix).reshape((4, 4), order='F')
         _projection_matrix = np.array(self.projection_matrix).reshape((4, 4), order='F')
         self.tran_pix_world = np.linalg.inv(_projection_matrix @ _view_matrix)
 
-    def rgbd_2_world(self, w, h, d):
+    def rgbd_2_world(self, h, w):
+        d = self.origin_depth[h, w]
         x = (2 * w - self.width) / self.width
         y = -(2 * h - self.height) / self.height
         z = 2 * d - 1
@@ -293,13 +307,25 @@ class Camera_front_top:
 
         return position[:3]
 
+    def camera_rotation_matrix(self):
+        pointing_direction = np.array([0, 0, 0.3]) - np.array([self.x, self.y, self.z]) 
+        up_vector = np.array([0,0,1])
+        forward = pointing_direction / np.linalg.norm(pointing_direction)
+        right = np.cross(forward, up_vector)
+        right /= np.linalg.norm(right)
+        up = np.cross(forward, right)
+        up /= np.linalg.norm(up)
+        return np.column_stack((right, up, forward))
+
     def shot(self):
         # Get depth values using the OpenGL renderer
         _w, _h, rgb, depth, seg = p.getCameraImage(self.width, self.height,
-                                                   self.view_matrix, self.projection_matrix,
+                                                   self.view_matrix, self.projection_matrix,shadow=True,renderer=p.ER_TINY_RENDERER
                                                    )
+        self.origin_depth = depth        
+        depth = self.far * self.near / (self.far - (self.far - self.near) * depth)
         return rgb, depth, seg
-
+    
     def rgbd_2_world_batch(self, depth):
         x = (2 * np.arange(0, self.width) - self.width) / self.width
         x = np.repeat(x[None, :], self.height, axis=0)

@@ -15,8 +15,9 @@ import pybullet_data
 from gen_sg import generate_sg
 from scene_utils import get_contact_objects, get_rotation, get_velocity
 from scene_utils import cal_distance, check_on_table, generate_scene_random, generate_scene_shape, get_init_euler, get_random_pos_from_grid, get_random_pos_orn, move_object, pickable_objects_list, quaternion_multiply, random_pos_on_table
+from scipy.spatial.transform import Rotation as R
 
-from utilities import Models, setup_sisbot, setup_sisbot_force, Camera
+from utilities import Models, setup_sisbot, setup_sisbot_force, Camera, Camera_front_top
 from collect_template_list import cat_to_name_test, cat_to_name_train, cat_to_name_inference
 from graspnet_baseline.grasp_infer import GraspNetInfer
 
@@ -28,7 +29,7 @@ class TableTopTidyingUpEnv:
     # OBJECT_INIT_HEIGHT = 1.05
     GRIPPER_MOVING_HEIGHT = 1.15
     GRIPPER_GRASPED_LIFT_HEIGHT = 1.2
-    GRASP_POINT_OFFSET_Z = 1.231 - 1.1
+    GRASP_POINT_OFFSET = 0.11
 
     GRASP_SUCCESS_REWARD = 1
     GRASP_FAIL_REWARD = -0.3
@@ -37,25 +38,29 @@ class TableTopTidyingUpEnv:
     DEPTH_CHANGE_THRESHOLD = 0.01
     DEPTH_CHANGE_COUNTER_THRESHOLD = 1000
     
-    TABLE_HEIGHT = 0.8
+    TABLE_HEIGHT = 0.65
 
     SIMULATION_STEP_DELAY = 1 / 240.
 
-    def __init__(self, objects_info, camera: Camera, vis=False, num_objs=3, gripper_type='85') -> None:
+    def __init__(self, objects_cfg, camera: Camera, camera_front_top: Camera_front_top, vis=False, num_objs=3, gripper_type='85') -> None:
         self.vis = vis
         self.num_objs = num_objs ##
         self.camera = camera
-        self.objects_info = objects_info
+        self.camera_front_top = camera_front_top
+        self.objects_cfg = objects_cfg
         self.set_grid()
         self.spawned_objects = None
         self.pre_selected_objects = []
         self.current_pybullet_ids = []
         self.objects_list = {}
         self.table_objects_list = {}
-
-        self.pybullet_object_path = objects_info['paths']['pybullet_object_path']
-        self.ycb_object_path = objects_info['paths']['ycb_object_path']
-        self.housecat_object_path = objects_info['paths']['housecat_object_path']
+        self.camera_top_to_world_T = self.camera.camera_rotation_matrix()
+        self.camera_ft_to_world_T = self.camera_front_top.camera_rotation_matrix()
+        print(self.camera_top_to_world_T)
+        print(self.camera_ft_to_world_T)
+        self.pybullet_object_path = objects_cfg['paths']['pybullet_object_path']
+        self.ycb_object_path = objects_cfg['paths']['ycb_object_path']
+        self.housecat_object_path = objects_cfg['paths']['housecat_object_path']
         self.spawn_obj_num = 0
         
         self.init_euler = get_init_euler()
@@ -65,7 +70,7 @@ class TableTopTidyingUpEnv:
             raise NotImplementedError('Gripper %s not implemented.' % gripper_type)
         self.gripper_type = gripper_type
         
-        if self.objects_info['split']=='unseen':
+        if self.objects_cfg['split']=='unseen':
             self.cat_to_name = cat_to_name_test
             for cat in self.cat_to_name.keys():
                 if not self.cat_to_name[cat]:
@@ -259,6 +264,7 @@ class TableTopTidyingUpEnv:
             self.objects_list[int(obj_id)] = (obj, size)
 
         self.current_pybullet_ids = copy.deepcopy(pybullet_ids)
+        return pybullet_ids
 
     def arrange_objects(self, random=False ):
         pybullet_ids = copy.deepcopy(self.current_pybullet_ids)
@@ -419,7 +425,6 @@ class TableTopTidyingUpEnv:
         obj_info['scene_graph'] = sg
         self.pickable_objects = obj_info['pickable_objects']
         self.obj_info = obj_info
-
         return
 
 
@@ -454,88 +459,223 @@ class TableTopTidyingUpEnv:
     def step(self, target_obj, target_position,rot_angle, debug=False): 
         '''
         rot angle: based on the pybullet coordinate. difference between target & init. 
-        target position : based on image coordinate. 0~1, 2dim
+        target position : image pixel. 2d (y,x) - based on top view image.
         '''
         x, y, z, roll, pitch, yaw, gripper_opening_length = self.read_debug_parameter()
-        roll, pitch = 0, np.pi / 2
+        # roll, pitch = 0, np.pi / 2
         orn = p.getQuaternionFromEuler([roll, pitch, yaw])
+        camera = self.camera_front_top
+        
         if debug:
-            
-            self.reset_robot()        
             rgb, depth, seg = self.camera.shot()
-            self.move_away_arm()        
             self.move_ee((x, y, z, orn))
-            
-            print(self.table_objects_list)
-            # plt.imshow(seg)
-            # plt.show()
-            self.grasp_detector.infer(rgb, depth, seg, 5)
-            # self.move_gripper(gripper_opening_length, 1)
             return            
 
         self.reset_robot()        
-        rgb, depth, seg = self.camera.shot()
+        # top view
+        rgb_top, depth_top, seg_top = self.camera.shot()
+        
+        # front top view
+        rgb, depth, seg = self.camera_front_top.shot()
+
         self.move_away_arm()        
-        
-        # graspnet needed
-        # grasp_pixel = self.find_grasp_point(rgb, depth, seg, target_obj, target_position, rot_angle)
-        # grasp_pixel to grasp position
-        grasp_position = (x, y, z)
-        grasp_angle = yaw
-        grasp_world_position = grasp_position  #self.camera.rgbd_2_world(grasp_pixel[0], grasp_pixel[1], depth[grasp_pixel[1], grasp_pixel[0]])
-        succeess_grasp = self.grasp(target_obj, grasp_world_position, grasp_angle)
-        
-        if succeess_grasp:        
-            object_center = np.array([0,0]) # pixel, bbox center.
-            object_center_world = self.camera.rgbd_2_world(object_center[0], object_center[1], depth[object_center[1], object_center[0]])
-            target_position_world = self.camera.rgbd_2_world(target_position[0], target_position[1], depth[target_position[1], target_position[0]])
+        if 'inference' in self.obj_info['objects'][target_obj]:
+            success_grasp, grasp_success_pose = self.rule_based_grasp(target_obj)
+        else:
+            grasp_world_position, grasp_angle = self.get_grasp_point(rgb, depth, seg, target_obj, camera)
+            success_grasp, grasp_success_pose = self.grasp(target_obj, grasp_world_position, grasp_angle)
+
+        # use top view for cal object center, displacement
+        if success_grasp:
+            mask_true = np.where(seg_top == target_obj)
+            y_max, y_min = np.max(mask_true[0]), np.min(mask_true[0])
+            x_max, x_min = np.max(mask_true[1]), np.min(mask_true[1])
+            object_center = np.array([int((y_max + y_min) / 2), int((x_max + x_min) / 2)])
             
-            displacement = np.array([grasp_world_position[0],grasp_world_position[1]]) - object_center_world
+            # input : y,x (pixel) ->
+            object_center_world = self.camera.rgbd_2_world(object_center[0], object_center[1])
+            target_position_world = self.camera.rgbd_2_world(target_position[0], target_position[1])
+
+            print('grasp_success_pose:', grasp_success_pose)
+            print('object_center_world:', object_center_world)            
+            print('target_position_world:', target_position_world)
+            
+            displacement = np.array([grasp_success_pose[0],grasp_success_pose[1]]) - object_center_world[:2]
             Rot_2d = np.array([[np.cos(rot_angle), -np.sin(rot_angle)], [np.sin(rot_angle), np.cos(rot_angle)]])
-            height_disp = grasp_world_position[2] - self.TABLE_HEIGHT
+            height_disp = grasp_success_pose[2] - self.TABLE_HEIGHT
             
             gripper_disp = Rot_2d @ displacement
             gripper_target_position = [target_position_world[0] + gripper_disp[0], target_position_world[1] + gripper_disp[1], target_position_world[2] + height_disp + 0.1]
             
-            self.place(gripper_target_position, rot_angle)
+            self.place(gripper_target_position, rot_angle, grasp_angle)
             
         else:
             return False
 
-    def grasp(self,target_obj: int, position: tuple, angle: float):
+    def rule_based_grasp(self, target_obj):
+        # get object info
+        obj_info = self.obj_info
+        object_name = obj_info['objects'][target_obj]
+        size = obj_info['sizes'][target_obj]
+        label = obj_info['semantic_label'][target_obj]
+        state = obj_info['state'][target_obj]
+        obj_pose, obj_quat = state
+        # find grasp orientation
+        roll, pitch = 0, np.pi/2
+        yaw = p.getEulerFromQuaternion(obj_quat)[2]
+        orn = p.getQuaternionFromEuler([roll, pitch, yaw])
+        # find grasp position
+        x, y = obj_pose[:2]
+        z = 0.8 #0.79
+        if label.startswith('plate'):
+            # plate
+            if 'inference_round_plate' in object_name:
+                radius = 0.07
+            elif 'inference_plate' in object_name:
+                radius = 0.12
+            elif 'inference_blue_plate' in object_name:
+                radius = 0.08
+            else:
+                radius = 0.07
+            if size=='large':
+                radius *= 1.1
+            elif size=='small':
+                radius *= 0.9
+            if np.random.random() > 0.5:
+                x += radius * np.sin(yaw)
+                y -= radius * np.cos(yaw)
+            else:
+                x -= radius * np.sin(yaw)
+                y += radius * np.cos(yaw)
+            z += 0.01
+        elif label.startswith('soap_dish'):
+            # soap dish
+            radius = 0.06
+            if size=='large':
+                radius *= 1.1
+            elif size=='small':
+                radius *= 0.9
+            if np.random.random() > 0.5:
+                x += radius * np.sin(yaw)
+                y -= radius * np.cos(yaw)
+            else:
+                x -= radius * np.sin(yaw)
+                y += radius * np.cos(yaw)
+            z += 0.02
+        # move to the pre-grasp pose
+        self.move_ee((x, y, z+0.2, orn))
+        self.open_gripper()
+
+        self.move_ee((x, y, z+0.1, orn))
+
+        # move to the grasp pose
+        self.move_ee((x, y, z, orn), custom_velocity=0.05)
+        item_in_gripper = self.close_gripper(check_contact=True)
+        # move to the pre-grasp pose
+        self.move_ee((x, y, z+0.2, orn), custom_velocity=0.05)
+        print('Item in Gripper!')
+        if item_in_gripper:
+            grasped_ids = self.check_grasped_id()
+            if target_obj in grasped_ids:
+                print('Grasping success')
+                time.sleep(10)
+                self.move_ee((x, y, self.GRIPPER_GRASPED_LIFT_HEIGHT, orn), try_close_gripper=False, max_step=1000)
+                return True, (x,y,z)
+
+        return False, None
+
+    def get_grasp_point(self,rgb,depth,seg,target_obj,camera):
+        gg = self.grasp_detector.infer(rgb, depth, seg, target_obj)
+        camera_to_world_T = camera.camera_rotation_matrix()
+        if len(gg) > 0:
+            translation = gg.translations[0]
+            rotation = gg.rotation_matrices[0]
+            rotation = camera_to_world_T @ rotation
+            r = R.from_matrix(rotation)
+            quat = r.as_quat()
+            roll, pitch, yaw = p.getEulerFromQuaternion(quat)
+
+            end_point = (camera_to_world_T @ translation.reshape(3,1)).T + np.array([camera.x, camera.y, camera.z])
+            end_point = end_point.squeeze()
+            print(end_point)
+        
+        if yaw < 0:
+            yaw += 2*np.pi
+        elif yaw > 2*np.pi:
+            yaw -= 2*np.pi 
+            
+        grasp_angle = (roll, pitch, yaw)
+        grasp_world_position = [end_point[0], end_point[1], end_point[2]]
+        return grasp_world_position, grasp_angle
+
+    def grasp(self,target_obj: int, position: tuple, angle: tuple):
         """
         position [x y z]: The axis in real-world coordinate
         angle: float,   for grasp, it should be in [-pi/2, pi/2)
                         for push,  it should be in [0, 2pi)
         """
+        print('position:', position, 'angle:', angle)
         x, y, z = position
-        roll, pitch, yaw = 0, np.pi / 2 , angle
+        roll, pitch, yaw = angle
         orn = p.getQuaternionFromEuler([roll, pitch, yaw])
-
+        
+        u_x = -np.cos(yaw)*np.cos(pitch)
+        u_y = -np.sin(yaw)*np.cos(pitch)
+        u_z = np.sin(pitch)
+        print('u:', u_x, u_y, u_z)
         # The return value of the step() method
-        self.move_ee((x, y, self.GRIPPER_MOVING_HEIGHT, orn))  # Top-Down grasp / push
-
+        r = self.GRASP_POINT_OFFSET + 0.1
+        x_, y_, z_ = x + r*u_x, y + r*u_y, z + r*u_z
+        self.move_ee((x_,y_,z_+0.1, orn))
+        time.sleep(3)
         self.open_gripper()
-        self.move_ee((x, y, z + self.GRASP_POINT_OFFSET_Z, orn),
-                        custom_velocity=0.05, max_step=1000)
+
+        self.move_ee((x_,y_,z_, orn))
+        time.sleep(3)
+
+        r = self.GRASP_POINT_OFFSET
+        x_, y_, z_ = x + r*u_x, y + r*u_y, z + r*u_z
+        self.move_ee((x_,y_,z_, orn))
+        time.sleep(3)
+
+        # self.move_ee((x, y, z + self.GRASP_POINT_OFFSET, orn),
+        #                 custom_velocity=0.05, max_step=1000)
+        # time.sleep(3)
         # item_in_gripper = self.close_gripper(check_contact=True)
         item_in_gripper = self.close_gripper(check_contact=True)
         print('Item in Gripper!')
         # When lifting the object, constantly try to close the gripper, in case of dropping
-        self.move_ee((x, y, z + self.GRASP_POINT_OFFSET_Z + 0.1, orn), try_close_gripper=False,
+        self.move_ee((x_, y_, z_ + self.GRASP_POINT_OFFSET + 0.1, orn), try_close_gripper=False,
                         custom_velocity=0.05, max_step=1000)
+        time.sleep(3)
         # Lift 10 cm
         if item_in_gripper:
             grasped_ids = self.check_grasped_id()
             if target_obj in grasped_ids:
                 print('Grasping success')
-                self.move_ee((x, y, self.GRIPPER_GRASPED_LIFT_HEIGHT, orn), try_close_gripper=False, max_step=1000)
-                return True
+                self.move_ee((x_, y_, self.GRIPPER_GRASPED_LIFT_HEIGHT, orn), try_close_gripper=False, max_step=1000)
+                return True, (x_,y_,z_)
         
-        return False
+        return False, None
 
 
-    def place(self):
+    def place(self, gripper_target_position, rot_angle, grasp_angle):        
+        x, y, z = gripper_target_position
+        roll, pitch, yaw = grasp_angle
+        yaw += rot_angle
+        if yaw < 0:
+            yaw += 2*np.pi
+        elif yaw > 2*np.pi:
+            yaw -= 2*np.pi
+            
+        orn = p.getQuaternionFromEuler([roll, pitch, yaw])
+        self.move_ee((x, y, z + 0.1, orn))
+        time.sleep(3)
+        
+        self.move_ee((x, y, z , orn))
+        time.sleep(3)
+        
+        self.open_gripper()        
         pass
 
 
