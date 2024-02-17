@@ -17,12 +17,12 @@ def ur5_control():
     camera_front_top = Camera_front_top((0.5, 0, 1.3), 0.02, 2, (480, 360), 60)
     
     objects_cfg = { 'paths': {
-            'pybullet_object_path' : '/home/wooseoko/workspace/hogun/pybullet_scene_gen/TabletopTidyingUp/pybullet-URDF-models/urdf_models/models',
-            'ycb_object_path' : '/home/wooseoko/workspace/hogun/pybullet_scene_gen/YCB_dataset',
-            'housecat_object_path' : '/home/wooseoko/workspace/hogun/pybullet_scene_gen/TabletopTidyingUp/housecat6d/obj_models_small_size_final',
-            # 'pybullet_object_path' : '/ssd/disk/pybullet-URDF-models/urdf_models/models',
-            # 'ycb_object_path' : '/ssd/disk/YCB_dataset',
-            # 'housecat_object_path' : '/ssd/disk/housecat6d/obj_models_small_size_final',
+            #'pybullet_object_path' : '/home/wooseoko/workspace/hogun/pybullet_scene_gen/TabletopTidyingUp/pybullet-URDF-models/urdf_models/models',
+            #'ycb_object_path' : '/home/wooseoko/workspace/hogun/pybullet_scene_gen/YCB_dataset',
+            #'housecat_object_path' : '/home/wooseoko/workspace/hogun/pybullet_scene_gen/TabletopTidyingUp/housecat6d/obj_models_small_size_final',
+            'pybullet_object_path' : '/ssd/disk/pybullet-URDF-models/urdf_models/models',
+            'ycb_object_path' : '/ssd/disk/YCB_dataset',
+            'housecat_object_path' : '/ssd/disk/housecat6d/obj_models_small_size_final',
         },
         'split' : 'inference' #'train'
     }
