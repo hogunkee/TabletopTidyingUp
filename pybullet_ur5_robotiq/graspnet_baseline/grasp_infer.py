@@ -90,7 +90,7 @@ class GraspNetInfer:
 
         gg.nms()
         gg.sort_by_score()
-        gg = gg[:1]
+        gg = gg[:10] #:1
         
         vis_grasps(gg, cloud)
         return gg

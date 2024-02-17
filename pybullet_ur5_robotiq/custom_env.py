@@ -12,6 +12,8 @@ print(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 import numpy as np
 import pybullet as p
 import pybullet_data
+
+import kinematics.kinematics as kinematics
 from gen_sg import generate_sg
 from scene_utils import get_contact_objects, get_rotation, get_velocity
 from scene_utils import cal_distance, check_on_table, generate_scene_random, generate_scene_shape, get_init_euler, get_random_pos_from_grid, get_random_pos_orn, move_object, pickable_objects_list, quaternion_multiply, random_pos_on_table
@@ -588,16 +590,21 @@ class TableTopTidyingUpEnv:
         gg = self.grasp_detector.infer(rgb, depth, seg, target_obj)
         camera_to_world_T = camera.camera_rotation_matrix()
         if len(gg) > 0:
-            translation = gg.translations[0]
-            rotation = gg.rotation_matrices[0]
-            rotation = camera_to_world_T @ rotation
-            r = R.from_matrix(rotation)
-            quat = r.as_quat()
-            roll, pitch, yaw = p.getEulerFromQuaternion(quat)
+            for g in gg:
+                translation = gg.translations[0]
+                rotation = gg.rotation_matrices[0]
+                rotation = camera_to_world_T @ rotation
+                r = R.from_matrix(rotation)
+                quat = r.as_quat()
+                roll, pitch, yaw = p.getEulerFromQuaternion(quat)
 
-            end_point = (camera_to_world_T @ translation.reshape(3,1)).T + np.array([camera.x, camera.y, camera.z])
-            end_point = end_point.squeeze()
-            print(end_point)
+                end_point = (camera_to_world_T @ translation.reshape(3,1)).T + np.array([camera.x, camera.y, camera.z])
+                end_point = end_point.squeeze()
+                is_feasible = self.check_feasible(end_point)
+                if is_feasible:
+                    grasp_world_position = [end_point[0], end_point[1], end_point[2]]
+                    break
+            print(grasp_world_position)
         
         if yaw < 0:
             yaw += 2*np.pi
@@ -605,7 +612,6 @@ class TableTopTidyingUpEnv:
             yaw -= 2*np.pi 
             
         grasp_angle = (roll, pitch, yaw)
-        grasp_world_position = [end_point[0], end_point[1], end_point[2]]
         return grasp_world_position, grasp_angle
 
     def grasp(self,target_obj: int, position: tuple, angle: tuple):
@@ -843,3 +849,23 @@ class TableTopTidyingUpEnv:
 
     def close(self):
         p.disconnect(self.physicsClient)
+
+    def check_fesible(eef_pose):
+        arm_joints = p.getNumJoints(self.robotID) - 1
+        init_pose = [0, 0, 0.9]
+        start_joint = p.calculateInverseKinematics(self.robotID, arm_joints, init_pose)
+        end_joint = p.calculateInverseKinematics(self.robotID, arm_joints, eef_pose)
+
+        joints_active = [1,2,3,4,5,6]
+        start_joint_active = start_joint[joints_active]
+        end_joint_active = end_joint[joints_active]
+        solution = kinematics.MotionPlanning(self.robotID, joints_active).solution(
+                start_joint_active, 
+                end_joint_active, 
+                obstacles=[self.UR5StandID, self.tableID])
+                )[0]
+
+        print('solution:', solution)
+        if solution is None:
+            return False
+        return True
