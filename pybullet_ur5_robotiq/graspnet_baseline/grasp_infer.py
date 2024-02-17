@@ -83,7 +83,7 @@ class GraspNetInfer:
             err2 = abs(yaw + np.pi/2)**2 + abs(roll - np.pi/2)**2
             err3 = abs(yaw - np.pi/2)**2 + abs(roll + np.pi/2)**2
             err4 = abs(yaw + np.pi/2)**2 + abs(roll + np.pi/2)**2
-            print(err1, err2, err3, err4)
+            #print(err1, err2, err3, err4)
 
             if err1 < rot_thres or err2 < rot_thres or err3 < rot_thres or err4 < rot_thres:
                 gg_new_array.append(gg.grasp_group_array[i])            

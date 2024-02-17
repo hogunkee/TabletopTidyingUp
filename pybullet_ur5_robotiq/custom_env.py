@@ -12,6 +12,7 @@ print(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 import numpy as np
 import pybullet as p
 import pybullet_data
+import pybullet_planning
 
 from gen_sg import generate_sg
 from scene_utils import get_contact_objects, get_rotation, get_velocity
@@ -599,7 +600,7 @@ class TableTopTidyingUpEnv:
 
                 end_point = (camera_to_world_T @ translation.reshape(3,1)).T + np.array([camera.x, camera.y, camera.z])
                 end_point = end_point.squeeze()
-                is_feasible = self.check_feasible(end_point)
+                is_feasible = self.check_feasible(end_point, quat)
 
                 print('Feasible:', is_feasible)
                 if is_feasible:
@@ -851,16 +852,14 @@ class TableTopTidyingUpEnv:
     def close(self):
         p.disconnect(self.physicsClient)
 
-    def check_feasible(self, eef_pose):
-        arm_joints = p.getNumJoints(self.robotID) - 1
+    def check_feasible(self, eef_pose, eef_orn):
         init_pose = [0, -0.25, 0.95]
-        start_joint = p.calculateInverseKinematics(self.robotID, arm_joints, init_pose)
-        end_joint = p.calculateInverseKinematics(self.robotID, arm_joints, eef_pose)
+        start_joint = p.calculateInverseKinematics(self.robotID, self.eefID, init_pose)
+        end_joint = p.calculateInverseKinematics(self.robotID, self.eefID, eef_pose, eef_orn)
 
         joints_active = [1,2,3,4,5,6]
         start_joint_active = np.array(start_joint)[joints_active]
         end_joint_active = np.array(end_joint)[joints_active]
-        solution = self.find_solution(start_joint_active, end_joint_active, joints_active)
 
         #solution = kinematics.MotionPlanning(self.robotID, joints_active).solution(
         #        start_joint_active, 
@@ -868,19 +867,23 @@ class TableTopTidyingUpEnv:
         #        obstacles=[self.UR5StandID, self.tableID]
         #        )[0]
 
-        print('solution:', solution)
+        solution = self.find_solution(start_joint_active, end_joint_active, joints_active, method='rrt')
+        #print('solution:', solution)
         if solution is None:
             return False
-        return True
+        else:
+            return True
 
-    def find_solution(self, startPose, endPose, jointsActive, obstacles):
+    def find_solution(self, startPose, endPose, jointsActive, method='rrt'):
+        obstacles=[self.UR5StandID, self.tableID]
+
         # joints limits
         limits=pybullet_planning.get_custom_limits(
            self.robotID,
            jointsActive,
            circular_limits=pybullet_planning.CIRCULAR_LIMITS)
 
-        joints = pybullet_planning.get_joints(self.robot_desc)
+        joints = pybullet_planning.get_joints(self.robotID)
 
         sample_fn = pybullet_planning.get_sample_fn(
            self.robotID,
@@ -892,17 +895,31 @@ class TableTopTidyingUpEnv:
             jointsActive,
             resolutions=None)
 
+        distance_fn = pybullet_planning.get_distance_fn(
+                self.robotID,
+                jointsActive,
+                )
+
         collision_fn = pybullet_planning.get_collision_fn(
            self.robotID,
            jointsActive,
            obstacles=obstacles,
            custom_limits=limits)
 
-        solution = pybullet_planning.lazy_prm(
-           start=startPose,
-           goal=endPose,
-           sample_fn=sample_fn,
-           extend_fn=extend_fn,
-           collision_fn=collision_fn)
+        if method=='rrt':
+            solution = pybullet_planning.rrt(
+               start=startPose, 
+               goal_sample=endPose, 
+               distance_fn=distance_fn, 
+               sample_fn=sample_fn,
+               extend_fn=extend_fn,
+               collision_fn=collision_fn)
+        elif method=='lazy_prm':
+            solution = pybullet_planning.lazy_prm(
+               start=startPose,
+               goal=endPose,
+               sample_fn=sample_fn,
+               extend_fn=extend_fn,
+               collision_fn=collision_fn)
 
         return solution
