@@ -601,6 +601,8 @@ class TableTopTidyingUpEnv:
                 end_point = (camera_to_world_T @ translation.reshape(3,1)).T + np.array([camera.x, camera.y, camera.z])
                 end_point = end_point.squeeze()
                 is_feasible = self.check_feasible(end_point)
+
+                print('Feasible:', is_feasible)
                 if is_feasible:
                     grasp_world_position = [end_point[0], end_point[1], end_point[2]]
                     break
@@ -850,19 +852,19 @@ class TableTopTidyingUpEnv:
     def close(self):
         p.disconnect(self.physicsClient)
 
-    def check_fesible(eef_pose):
+    def check_feasible(self, eef_pose):
         arm_joints = p.getNumJoints(self.robotID) - 1
-        init_pose = [0, 0, 0.9]
+        init_pose = [0, -0.25, 0.95]
         start_joint = p.calculateInverseKinematics(self.robotID, arm_joints, init_pose)
         end_joint = p.calculateInverseKinematics(self.robotID, arm_joints, eef_pose)
 
         joints_active = [1,2,3,4,5,6]
-        start_joint_active = start_joint[joints_active]
-        end_joint_active = end_joint[joints_active]
+        start_joint_active = np.array(start_joint)[joints_active]
+        end_joint_active = np.array(end_joint)[joints_active]
         solution = kinematics.MotionPlanning(self.robotID, joints_active).solution(
                 start_joint_active, 
                 end_joint_active, 
-                obstacles=[self.UR5StandID, self.tableID])
+                obstacles=[self.UR5StandID, self.tableID]
                 )[0]
 
         print('solution:', solution)
