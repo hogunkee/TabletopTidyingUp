@@ -13,7 +13,6 @@ import numpy as np
 import pybullet as p
 import pybullet_data
 
-import kinematics.kinematics as kinematics
 from gen_sg import generate_sg
 from scene_utils import get_contact_objects, get_rotation, get_velocity
 from scene_utils import cal_distance, check_on_table, generate_scene_random, generate_scene_shape, get_init_euler, get_random_pos_from_grid, get_random_pos_orn, move_object, pickable_objects_list, quaternion_multiply, random_pos_on_table
@@ -861,13 +860,49 @@ class TableTopTidyingUpEnv:
         joints_active = [1,2,3,4,5,6]
         start_joint_active = np.array(start_joint)[joints_active]
         end_joint_active = np.array(end_joint)[joints_active]
-        solution = kinematics.MotionPlanning(self.robotID, joints_active).solution(
-                start_joint_active, 
-                end_joint_active, 
-                obstacles=[self.UR5StandID, self.tableID]
-                )[0]
+        solution = self.find_solution(start_joint_active, end_joint_active, joints_active)
+
+        #solution = kinematics.MotionPlanning(self.robotID, joints_active).solution(
+        #        start_joint_active, 
+        #        end_joint_active, 
+        #        obstacles=[self.UR5StandID, self.tableID]
+        #        )[0]
 
         print('solution:', solution)
         if solution is None:
             return False
         return True
+
+    def find_solution(self, startPose, endPose, jointsActive, obstacles):
+        # joints limits
+        limits=pybullet_planning.get_custom_limits(
+           self.robotID,
+           jointsActive,
+           circular_limits=pybullet_planning.CIRCULAR_LIMITS)
+
+        joints = pybullet_planning.get_joints(self.robot_desc)
+
+        sample_fn = pybullet_planning.get_sample_fn(
+           self.robotID,
+           jointsActive,
+           custom_limits=limits)
+
+        extend_fn = pybullet_planning.get_extend_fn(
+            self.robotID,
+            jointsActive,
+            resolutions=None)
+
+        collision_fn = pybullet_planning.get_collision_fn(
+           self.robotID,
+           jointsActive,
+           obstacles=obstacles,
+           custom_limits=limits)
+
+        solution = pybullet_planning.lazy_prm(
+           start=startPose,
+           goal=endPose,
+           sample_fn=sample_fn,
+           extend_fn=extend_fn,
+           collision_fn=collision_fn)
+
+        return solution
