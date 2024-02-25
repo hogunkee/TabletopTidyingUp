@@ -430,7 +430,6 @@ class TableTopTidyingUpEnv:
         return
 
 
-
     def step_simulation(self, delay=True):
         """
         Hook p.stepSimulation()
@@ -459,6 +458,26 @@ class TableTopTidyingUpEnv:
         return changed_depth_counter > self.DEPTH_CHANGE_COUNTER_THRESHOLD
 
     def step(self, target_obj, target_position,rot_angle, debug=False): 
+        '''
+        rot angle: based on the pybullet coordinate. difference between target & init. 
+        target position : image pixel. 2d (y,x) - based on top view image.
+        '''
+        self.reset_robot()        
+        # top view
+        rgb_top, depth_top, seg_top = self.camera.shot()
+        
+        # front top view
+        rgb, depth, seg = self.camera_front_top.shot()
+
+        target_position_world = self.camera.rgbd_2_world(target_position[0], target_position[1])
+        target_position_world += np.array([0., 0., 0.03])
+        orig_pos, orig_rot = p.getBasePositionAndOrientation(target_obj)
+        rot = euler2quat(0, 0, rot_angle)
+        rot = quaternion_multiply(rot, orig_rot)
+        p.resetBasePositionAndOrientation(target_obj, target_position_world, rot)
+        self.step_simulation(delay=False)
+
+    def step_real_grasp(self, target_obj, target_position,rot_angle, debug=False): 
         '''
         rot angle: based on the pybullet coordinate. difference between target & init. 
         target position : image pixel. 2d (y,x) - based on top view image.
