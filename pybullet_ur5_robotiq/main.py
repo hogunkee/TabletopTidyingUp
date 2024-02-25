@@ -48,8 +48,11 @@ def ur5_control():
         # select pick object
         # object place at the certain pos, orn.
         # use env.step_action to move the gripper to the object.
-        env.step(5,(180,240),0.6) # pos : (y,x)
-        print('step')
+        target_pos = (np.random.random(2) * np.array([360, 480])-0.5).astype(int)
+        obs = env.step(5, target_pos, np.pi/2)
+        print(obs)
+        #env.step(5,(180,240),0.6) # pos : (y,x)
+        #print('step')
         
         #debugging
         # key control
