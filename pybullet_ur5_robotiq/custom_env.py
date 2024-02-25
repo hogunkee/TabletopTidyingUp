@@ -475,9 +475,9 @@ class TableTopTidyingUpEnv:
 
         # top view
         rgb_top, depth_top, seg_top = self.camera.shot()
-        
         # front top view
-        rgb, depth, seg = self.camera_front_top.shot()
+        rgb_front, depth_front, seg_front = self.camera_front_top.shot()
+
         observation = {
             'top': {
                 'rgb': rgb_top,
@@ -485,9 +485,9 @@ class TableTopTidyingUpEnv:
                 'segementation': seg_top
                 },
             'front': {
-                'rgb': rgb,
-                'depth': depth,
-                'segementation': seg
+                'rgb': rgb_front,
+                'depth': depth_front,
+                'segementation': seg_front
                 }
             }
         return observation
@@ -749,11 +749,28 @@ class TableTopTidyingUpEnv:
         self.reset_robot()
 
         self.move_away_arm()
-        rgb, depth, seg = self.camera.shot()
-        self.prev_observation = (rgb, depth, seg)
+        # top view
+        rgb_top, depth_top, seg_top = self.camera.shot()
+        # front top view
+        rgb_front, depth_front, seg_front = self.camera_front_top.shot()
+        #rgb, depth, seg = self.camera.shot()
+        self.prev_observation = (rgb_top, depth_top, seg_top)
         self.reset_robot()
 
-        return rgb, depth, seg
+        observation = {
+            'top': {
+                'rgb': rgb_top,
+                'depth': depth_top,
+                'segementation': seg_top
+                },
+            'front': {
+                'rgb': rgb_front,
+                'depth': depth_front,
+                'segementation': seg_front
+                }
+            }
+        return observation
+        #return rgb, depth, seg
 
     def move_away_arm(self):
         joint = self.joints['shoulder_pan_joint']
