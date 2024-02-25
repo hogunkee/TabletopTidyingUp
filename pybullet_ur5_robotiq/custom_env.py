@@ -18,6 +18,7 @@ from gen_sg import generate_sg
 from scene_utils import get_contact_objects, get_rotation, get_velocity
 from scene_utils import cal_distance, check_on_table, generate_scene_random, generate_scene_shape, get_init_euler, get_random_pos_from_grid, get_random_pos_orn, move_object, pickable_objects_list, quaternion_multiply, random_pos_on_table
 from scipy.spatial.transform import Rotation as R
+from transform_utils import euler2quat
 
 from utilities import Models, setup_sisbot, setup_sisbot_force, Camera, Camera_front_top
 from collect_template_list import cat_to_name_test, cat_to_name_train, cat_to_name_inference
