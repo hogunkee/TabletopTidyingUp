@@ -754,13 +754,16 @@ class TableTopTidyingUpEnv:
         p.resetSimulation()
         self.initialize_pybullet_scene()
 
+        self.reset_robot()        
+        self.step_simulation(delay=False)
+
         # top view
         rgb_top, depth_top, seg_top = self.camera.shot()
         # front top view
         rgb_front, depth_front, seg_front = self.camera_front_top.shot()
         #rgb, depth, seg = self.camera.shot()
         self.prev_observation = (rgb_top, depth_top, seg_top)
-        self.move_away_arm()
+        #self.move_away_arm()
 
         observation = {
             'top': {
@@ -778,6 +781,7 @@ class TableTopTidyingUpEnv:
         #return rgb, depth, seg
 
     def get_observation(self):
+        self.reset_robot()        
         self.step_simulation(delay=False)
         # top view
         rgb_top, depth_top, seg_top = self.camera.shot()
