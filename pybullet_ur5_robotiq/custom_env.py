@@ -102,6 +102,9 @@ class TableTopTidyingUpEnv:
 
         # define environment
         self.physicsClient = p.connect(p.GUI if self.vis else p.DIRECT)
+        self.initialize_pybullet_scene()
+
+    def initialize_pybullet_scene(self):
         p.setAdditionalSearchPath(pybullet_data.getDataPath())
         p.setGravity(0, 0, -10)
         self.planeID = p.loadURDF("plane.urdf")
@@ -111,13 +114,13 @@ class TableTopTidyingUpEnv:
                                      p.getQuaternionFromEuler([0, 0, np.pi / 2]),
                                      globalScaling=0.7,
                                      useFixedBase=True)
-        self.robotID = p.loadURDF(os.path.join(FILE_PATH, "./urdf/ur5_robotiq_%s.urdf" % gripper_type),
+        self.robotID = p.loadURDF(os.path.join(FILE_PATH, "./urdf/ur5_robotiq_%s.urdf" % self.gripper_type),
                                   [0.6, 0, -0.18],  # StartPosition
                                   p.getQuaternionFromEuler([0, 0, -np.pi / 2]),  # StartOrientation
                                   useFixedBase=True,
                                   flags=p.URDF_USE_INERTIA_FROM_FILE)
         self.joints, self.controlGripper, self.controlJoints, self.mimicParentName =\
-            setup_sisbot(p, self.robotID, gripper_type)
+            setup_sisbot(p, self.robotID, self.gripper_type)
         self.eefID = 7  # ee_link
         # Add force sensors
         p.enableJointForceTorqueSensor(self.robotID, self.joints['left_inner_finger_pad_joint'].id)
@@ -747,7 +750,9 @@ class TableTopTidyingUpEnv:
         self.current_pybullet_ids = []
         self.spawn_obj_num = 0
         
-        self.reset_robot()
+        #self.reset_robot()
+        p.resetSimulation()
+        self.initialize_pybullet_scene()
 
         # top view
         rgb_top, depth_top, seg_top = self.camera.shot()
@@ -771,6 +776,29 @@ class TableTopTidyingUpEnv:
             }
         return observation
         #return rgb, depth, seg
+
+    def get_observation(self):
+        self.step_simulation(delay=False)
+        # top view
+        rgb_top, depth_top, seg_top = self.camera.shot()
+        # front top view
+        rgb_front, depth_front, seg_front = self.camera_front_top.shot()
+        #rgb, depth, seg = self.camera.shot()
+        self.prev_observation = (rgb_top, depth_top, seg_top)
+
+        observation = {
+            'top': {
+                'rgb': rgb_top,
+                'depth': depth_top,
+                'segmentation': seg_top
+                },
+            'front': {
+                'rgb': rgb_front,
+                'depth': depth_front,
+                'segmentation': seg_front
+                }
+            }
+        return observation
 
     def move_away_arm(self):
         joint = self.joints['shoulder_pan_joint']
