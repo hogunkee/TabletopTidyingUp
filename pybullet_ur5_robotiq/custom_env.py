@@ -7,6 +7,7 @@ import random
 
 import sys
 from matplotlib import pyplot as plt
+FILE_PATH = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 print(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 import numpy as np
@@ -22,7 +23,7 @@ from transform_utils import euler2quat
 
 from utilities import Models, setup_sisbot, setup_sisbot_force, Camera, Camera_front_top
 from collect_template_list import cat_to_name_test, cat_to_name_train, cat_to_name_inference
-from graspnet_baseline.grasp_infer import GraspNetInfer
+#from graspnet_baseline.grasp_infer import GraspNetInfer
 
 class FailToReachTargetError(RuntimeError):
     pass
@@ -105,12 +106,12 @@ class TableTopTidyingUpEnv:
         p.setGravity(0, 0, -10)
         self.planeID = p.loadURDF("plane.urdf")
         self.tableID = p.loadURDF("table/table.urdf", basePosition=[0.0,0.0,0.0], baseOrientation=[0.0,0.0,0.7071,0.7071], useFixedBase=True)
-        self.UR5StandID = p.loadURDF("./urdf/objects/ur5_stand.urdf",
+        self.UR5StandID = p.loadURDF(os.path.join(FILE_PATH, "./urdf/objects/ur5_stand.urdf"),
                                      [0.9, -0.49, 0.05],
                                      p.getQuaternionFromEuler([0, 0, np.pi / 2]),
                                      globalScaling=0.7,
                                      useFixedBase=True)
-        self.robotID = p.loadURDF("./urdf/ur5_robotiq_%s.urdf" % gripper_type,
+        self.robotID = p.loadURDF(os.path.join(FILE_PATH, "./urdf/ur5_robotiq_%s.urdf" % gripper_type),
                                   [0.6, 0, -0.18],  # StartPosition
                                   p.getQuaternionFromEuler([0, 0, -np.pi / 2]),  # StartOrientation
                                   useFixedBase=True,
@@ -152,7 +153,7 @@ class TableTopTidyingUpEnv:
         # Observation buffer
         self.prev_observation = tuple()
         
-        self.grasp_detector = GraspNetInfer()
+        #self.grasp_detector = GraspNetInfer()
         
 
     def set_grid(self):
@@ -482,12 +483,12 @@ class TableTopTidyingUpEnv:
             'top': {
                 'rgb': rgb_top,
                 'depth': depth_top,
-                'segementation': seg_top
+                'segmentation': seg_top
                 },
             'front': {
                 'rgb': rgb_front,
                 'depth': depth_front,
-                'segementation': seg_front
+                'segmentation': seg_front
                 }
             }
         return observation
@@ -748,25 +749,24 @@ class TableTopTidyingUpEnv:
         
         self.reset_robot()
 
-        self.move_away_arm()
         # top view
         rgb_top, depth_top, seg_top = self.camera.shot()
         # front top view
         rgb_front, depth_front, seg_front = self.camera_front_top.shot()
         #rgb, depth, seg = self.camera.shot()
         self.prev_observation = (rgb_top, depth_top, seg_top)
-        self.reset_robot()
+        self.move_away_arm()
 
         observation = {
             'top': {
                 'rgb': rgb_top,
                 'depth': depth_top,
-                'segementation': seg_top
+                'segmentation': seg_top
                 },
             'front': {
                 'rgb': rgb_front,
                 'depth': depth_front,
-                'segementation': seg_front
+                'segmentation': seg_front
                 }
             }
         return observation
