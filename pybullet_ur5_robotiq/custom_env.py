@@ -782,7 +782,7 @@ class TableTopTidyingUpEnv:
 
     def get_observation(self):
         self.reset_robot()        
-        self.step_simulation(delay=False)
+        self.step_simulation(delay=True)
         # top view
         rgb_top, depth_top, seg_top = self.camera.shot()
         # front top view
