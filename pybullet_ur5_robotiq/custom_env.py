@@ -273,7 +273,7 @@ class TableTopTidyingUpEnv:
         self.current_pybullet_ids = copy.deepcopy(pybullet_ids)
         return pybullet_ids
 
-    def arrange_objects(self, random=False ):
+    def arrange_objects(self, random=False):
         pybullet_ids = copy.deepcopy(self.current_pybullet_ids)
 
         # set objects #
@@ -293,7 +293,7 @@ class TableTopTidyingUpEnv:
                 # TODO : load template?
                 pass
             
-            is_feasible, data_objects_list = self.load_obj_without_template(selected_objects, init_positions, init_rotations)
+            is_feasible, data_objects_list = self.load_obj_without_template(selected_objects, init_positions, init_rotations, random)
             
             count_scene_trials += 1
             if is_feasible or count_scene_trials > 5:
@@ -305,11 +305,11 @@ class TableTopTidyingUpEnv:
             return False
         
         self.pickable_objects = []
-        self.get_obj_infos( data_objects_list) ##
+        self.get_obj_infos(data_objects_list) ##
         self.table_objects_list = data_objects_list
         return True
     
-    def load_obj_without_template(self, selected_objects, init_positions, init_rotations):
+    def load_obj_without_template(self, selected_objects, init_positions, init_rotations, random):
         # place new objects #
         set_base_rot = True if init_rotations == [] else False               
         for idx, obj_id in enumerate(selected_objects):
@@ -1006,3 +1006,93 @@ class TableTopTidyingUpEnv:
                collision_fn=collision_fn)
 
         return solution
+
+
+    def get_augmented_templates(self, template, num_augmentations=5):
+        final_poses = {}
+        objects = []
+        for action in template['action_order']:
+            action_type, obj_id, pos, rot = action
+            if pos is not None:
+                if obj_id not in objects:
+                    objects.append(obj_id)
+                final_poses[obj_id] = pos
+        new_templates = []
+        new_template = copy.deepcopy(template)
+        new_templates.append(new_template)
+        mean_pos_x = np.mean([final_poses[obj_id][0] for obj_id in objects])
+        mean_pos_y = np.mean([final_poses[obj_id][1] for obj_id in objects])
+        
+        for i in range(num_augmentations-1):
+            new_template = copy.deepcopy(template)
+            while True:
+                is_good = True
+                random_pos_diff = np.random.uniform(-0.15, 0.15,  2)
+                random_scaling = np.random.uniform(0.9, 1.1)
+                pos_diff = {}
+                for obj_id in objects:
+                    pos_x = (final_poses[obj_id][0] - mean_pos_x) * random_scaling + mean_pos_x + random_pos_diff[0]
+                    pos_y = (final_poses[obj_id][1] - mean_pos_y) * random_scaling + mean_pos_y + random_pos_diff[1]
+                    pos_diff[obj_id] = (pos_x - final_poses[obj_id][0], pos_y - final_poses[obj_id][1])
+                    if(-0.4 < pos_x < 0.4 and -0.55 < pos_y < 0.55):
+                        continue
+                    else:
+                        is_good = False
+                if is_good:
+                    break
+            for j,action in enumerate(new_template['action_order']):
+                action_type, obj_id, pos, rot = action
+                if pos is not None:
+                    new_pos = [pos[0] + pos_diff[obj_id][0], pos[1] + pos_diff[obj_id][1] , pos[2]]
+                    new_template['action_order'][j] = (action_type, obj_id, new_pos, rot)
+            new_templates.append(new_template)
+                        
+        return new_templates
+
+    def load_template(self, templates, objects=None): 
+        self.pre_selected_objects = []
+        template_id_to_sim_id = {}
+        data_objects_list = {}
+        template_id_to_obj = {}
+        spawn_list = []
+        if objects is None:
+            for action in templates['action_order']:
+                action_type, obj_id, pos, rot = action
+                if action_type == 0: # spawn
+                    obj_cat, obj_size = templates['objects'][str(obj_id)]
+                    obj_name = np.random.choice(self.cat_to_name[obj_cat])  
+                    spawn_list.append((obj_name, obj_size))
+                    obj_name = obj_name.split('/')[-1]
+                    template_id_to_obj[obj_id] = (obj_name, obj_size)
+        else:
+            for i in range(len(objects)):
+                obj_type, obj_name, obj_size, obj_id = objects[i]
+                spawn_list.append((obj_type + '/' + obj_name, obj_size))
+                template_id_to_obj[obj_id] = (obj_name, obj_size)
+        
+        self.spawn_objects(spawn_list)
+        pybullet_ids = copy.deepcopy(self.current_pybullet_ids)
+
+        key_list = list(self.objects_list.keys())
+        value_list = list(self.objects_list.values())
+        for action in templates['action_order']:
+            action_type, obj_id, pos, rot = action
+            if action_type == 0: # spawn
+                obj = template_id_to_obj[obj_id]
+                sim_obj_id = key_list[value_list.index(obj)]
+                value_list[value_list.index(obj)] = None
+                template_id_to_sim_id[obj_id] = sim_obj_id
+                data_objects_list[sim_obj_id] = self.objects_list[sim_obj_id]
+                spawn_rot = quaternion_multiply(rot, self.base_rot[sim_obj_id])
+                p.resetBasePositionAndOrientation(sim_obj_id, pos, spawn_rot)
+                
+            elif action_type == 1:
+                sim_obj_id = template_id_to_sim_id[obj_id]
+                orig_pos, orig_rot = p.getBasePositionAndOrientation(sim_obj_id)
+                rot = quaternion_multiply(rot, orig_rot)
+                p.resetBasePositionAndOrientation(sim_obj_id, pos, rot)                
+                
+            elif action_type == 2:
+                for _ in range(100):
+                    p.stepSimulation()
+        self.pre_selected_objects = list(template_id_to_sim_id.values())
