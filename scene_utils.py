@@ -410,7 +410,7 @@ def cal_distance(objects_list):
     return dist
 
 def check_on_table(objects_list):
-    print("check on table & image")
+    #print("check on table & image")
     for obj_id in objects_list.keys():
         pos, orn = p.getBasePositionAndOrientation(obj_id)
         if(-0.4 < pos[0] < 0.4 and -0.6 < pos[1] < 0.6 and 0.6 < pos[2] < 1.0):
