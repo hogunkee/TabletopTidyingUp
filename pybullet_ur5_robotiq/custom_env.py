@@ -214,7 +214,7 @@ class TableTopTidyingUpEnv:
         return urdf_id_names
 
     def spawn_objects(self, obj_list):  # spawn_obj_list : [(obj_name, size), ...]
-        print(obj_list)
+        #print(obj_list)
         spawn_obj_list = []
         for obj_cat, size in obj_list:
             obj_name = np.random.choice(self.cat_to_name[obj_cat])  
