@@ -475,7 +475,7 @@ class TableTopTidyingUpEnv:
         rot = euler2quat([0, 0, rot_angle])
         rot = quaternion_multiply(rot, orig_rot)
         p.resetBasePositionAndOrientation(target_obj, target_position_world, rot)
-        self.step_simulation(delay=False)
+        self.step_simulation(delay=True) #False
 
         # top view
         rgb_top, depth_top, seg_top = self.camera.shot()
