@@ -439,7 +439,8 @@ class TableTopTidyingUpEnv:
         """
         Hook p.stepSimulation()
         """
-        p.stepSimulation()
+        for i in range(100):
+            p.stepSimulation()
         if self.vis and delay is True:
             time.sleep(self.SIMULATION_STEP_DELAY)
 
