@@ -810,7 +810,7 @@ if __name__=='__main__':
     opt = lambda : None
     opt.nb_objects = 15 #20
     opt.inscene_objects = 5 #7
-    opt.scene_type = 'line' # 'random' or 'line'
+    opt.scene_type = 'circle' # 'random' or 'line'
     opt.spp = 32 #64 
     opt.width = 480
     opt.height = 360
@@ -846,10 +846,12 @@ if __name__=='__main__':
         opt.dataset = 'train'
     
 
-    scenes = ['line_3', 'line_4', 'line_5', 'line_6'] #train 
+    scenes = ['circle_3', 'circle_4', 'circle_5', 'circle_6'] #train 
     # scenes = ['random_5', 'random_6', 'random_7', 'random_8'] #test
     ts = TabletopScenes(opt, data_collect=True)
     spawn_objects_list = ts.object_name_list #['stapler_2', 'two_color_hammer', 'scissors', 'extra_large_clamp', 'phillips_screwdriver', 'stapler_1', 'conditioner', 'book_1', 'book_2', 'book_3', 'book_4', 'book_5', 'book_6', 'power_drill', 'plastic_pear', 'cracker_box', 'blue_plate', 'blue_cup', 'cleanser', 'bowl', 'plastic_lemon', 'mug', 'square_plate_4', 'sugar_box', 'plastic_strawberry', 'medium_clamp', 'plastic_peach', 'knife', 'square_plate_2', 'fork', 'plate', 'green_cup', 'green_bowl', 'orange_cup', 'large_clamp', 'spoon', 'pink_tea_box', 'pudding_box', 'plastic_orange', 'plastic_apple', 'doraemon_plate', 'lipton_tea', 'yellow_bowl', 'grey_plate', 'gelatin_box', 'blue_tea_box', 'flat_screwdriver', 'mini_claw_hammer_1', 'shampoo', 'glue_1', 'glue_2', 'small_clamp', 'square_plate_3', 'doraemon_bowl', 'square_plate_1', 'round_plate_1', 'round_plate_3', 'round_plate_2', 'round_plate_4', 'plastic_banana', 'yellow_cup']
+    # for circle shape
+    spawn_objects_list = [obj for obj in spawn_objects_list if 'book' not in obj]
     for scene in scenes:
         for n_set in range(opt.nb_randomset): 
             n_obj = int(scene.split('_')[-1])
