@@ -95,8 +95,8 @@ def generate_scene_shape(scene_type, num_objects):
             s = np.random.choice(range(8))
             x_hat = x_hats[s]
             x_hat /= np.linalg.norm(x_hat)
-            x1, y1 = [xc, yc] - x_hat * 0.15 * num_objects/2
-            x2, y2 = [xc, yc] + x_hat * 0.15 * num_objects/2
+            x1, y1 = [xc, yc] - x_hat * 0.2 * num_objects/2 #0.15
+            x2, y2 = [xc, yc] + x_hat * 0.2 * num_objects/2 #0.15
             if min(x1, x2) < -0.3 or max(x1, x2) > 0.3:
                 check_feasible = False
                 continue
