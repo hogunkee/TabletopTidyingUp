@@ -86,6 +86,7 @@ def generate_scene_shape(scene_type, num_objects):
         # positions[:, 2] = z_default
         rotations = [] # TODO: add random rotations (z-axis)
     elif scene_type=='line':
+        num_trials = 0
         check_feasible = False
         while not check_feasible:
             xc, yc = np.array(random_pos_on_table())[:2]
@@ -104,6 +105,9 @@ def generate_scene_shape(scene_type, num_objects):
                 check_feasible = False
                 continue
             check_feasible = True
+            num_trials += 1
+            if num_trials > 10:
+                return None, None
 
         xs = np.linspace(x1, x2, num_objects)
         ys = np.linspace(y1, y2, num_objects)

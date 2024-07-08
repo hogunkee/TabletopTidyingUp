@@ -395,7 +395,10 @@ class TabletopScenes(object):
             else:     # defined position and rotation (rule-based : specific shape)
                 init_positions, init_rotations = generate_scene_shape(self.opt.scene_type, self.opt.inscene_objects)
                 # init_rotations = []                
-            is_feasible, data_objects_list = self.load_obj_without_template(selected_objects, init_positions, init_rotations)
+            if init_positions is None:
+                is_feasible = False
+            else:
+                is_feasible, data_objects_list = self.load_obj_without_template(selected_objects, init_positions, init_rotations)
             
             count_scene_trials += 1
             if is_feasible or count_scene_trials > 5:
@@ -863,13 +866,21 @@ if __name__=='__main__':
               
                 scene_id = {'scene': scene, 'template_id': n_set,'trajectory': traj_id, 'frame': 0}           
                 success_placement = False
+
+                cnt = 0
                 while not success_placement:
+                    if cnt > 20:
+                        break
                     ts.set_floor(texture_id=-1)
                     print(f'rendering scene {str(scene_id["scene"])}-{str(scene_id["template_id"])}-{str(scene_id["trajectory"])}-{str(scene_id["frame"])}', end='\r')
                     success_placement = ts.arrange_objects(scene_id, random=False)
                     if not success_placement:
+                        cnt += 1
                         continue
                 scene_id['frame'] += 1
+                if cnt>20:
+                    break
+
                 cnt = 0
                 # 2. Move each object to a random place #
                 while scene_id['frame'] < int(opt.nb_frames): #
