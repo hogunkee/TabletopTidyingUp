@@ -894,7 +894,12 @@ class TableTopTidyingUpEnv:
         rgb_top, depth_top, seg_top = self.camera.shot()
         # front top view
         rgb_front, depth_front, seg_front = self.camera_front_top.shot()
-        #rgb, depth, seg = self.camera.shot()
+
+        # NviSii - top view
+        nv_rgb_top, nv_depth_top, nv_seg_top = self.nvisii_render('top')
+        # NviSii - front top view
+        nv_rgb_front, nv_depth_front, nv_seg_front = self.nvisii_render('front_top')
+
         self.prev_observation = (rgb_top, depth_top, seg_top)
         #self.move_away_arm()
 
@@ -908,6 +913,16 @@ class TableTopTidyingUpEnv:
                 'rgb': rgb_front,
                 'depth': depth_front,
                 'segmentation': seg_front
+                },
+            'nv-top': {
+                'rgb': nv_rgb_top,
+                'depth': nv_depth_top,
+                'segmentation': nv_seg_top
+                },
+            'nv-front': {
+                'rgb': nv_rgb_front,
+                'depth': nv_depth_front,
+                'segmentation': nv_seg_front
                 }
             }
         return observation
@@ -920,7 +935,11 @@ class TableTopTidyingUpEnv:
         rgb_top, depth_top, seg_top = self.camera.shot()
         # front top view
         rgb_front, depth_front, seg_front = self.camera_front_top.shot()
-        #rgb, depth, seg = self.camera.shot()
+        # NviSii - top view
+        nv_rgb_top, nv_depth_top, nv_seg_top = self.nvisii_render('top')
+        # NviSii - front top view
+        nv_rgb_front, nv_depth_front, nv_seg_front = self.nvisii_render('front_top')
+
         self.prev_observation = (rgb_top, depth_top, seg_top)
 
         observation = {
@@ -933,6 +952,16 @@ class TableTopTidyingUpEnv:
                 'rgb': rgb_front,
                 'depth': depth_front,
                 'segmentation': seg_front
+                },
+            'nv-top': {
+                'rgb': nv_rgb_top,
+                'depth': nv_depth_top,
+                'segmentation': nv_seg_top
+                },
+            'nv-front': {
+                'rgb': nv_rgb_front,
+                'depth': nv_depth_front,
+                'segmentation': nv_seg_front
                 }
             }
         return observation
