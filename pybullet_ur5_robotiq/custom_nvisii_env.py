@@ -54,6 +54,7 @@ class TableTopTidyingUpEnv:
         self.num_objs = num_objs ##
         self.camera = camera
         self.camera_front_top = camera_front_top
+        self.cam_width, self.cam_height = camera.width, camera.height
 
         # NviSii cameras
         nv.initialize(headless=True, lazy_updates=True) # headless=False
@@ -120,7 +121,7 @@ class TableTopTidyingUpEnv:
             transform = nv.transform.create("camera_" + view),
             camera = nv.camera.create_from_fov(
                 name = "camera_" + view, field_of_view = 60 * np.pi / 180,
-                aspect = float(self.opt.width)/float(self.opt.height)
+                aspect = float(self.cam_width)/float(self.cam_height)
             ))
 
         camera.get_transform().look_at(at=at, up=up, eye=eye)
@@ -134,16 +135,16 @@ class TableTopTidyingUpEnv:
             nv.set_camera_entity(self.nv_camera_front_top)
         # 1. RGB
         rgb = nv.render(
-            width=int(self.opt.width), height=int(self.opt.height), 
-            samples_per_pixel=int(self.opt.spp)
+            width=int(self.cam_width), height=int(self.cam_height), 
+            samples_per_pixel=32
         )
 
         # 2. Depth
         d = nv.render_data(
-            width=int(self.opt.width), height=int(self.opt.height),
+            width=int(self.cam_width), height=int(self.cam_height),
             start_frame=0, frame_count=5, bounce=0, options='depth',
         )
-        depth = np.array(d).reshape([int(self.opt.height), int(self.opt.width), -1])[:, :, 0]
+        depth = np.array(d).reshape([int(self.cam_height), int(self.cam_width), -1])[:, :, 0]
         depth = np.flip(depth, axis = 0)
         depth[np.isinf(depth)] = 3
         depth[depth < 0] = 3
@@ -151,23 +152,20 @@ class TableTopTidyingUpEnv:
         
         # 3. Segmentation
         entity_id = nv.render_data(
-            width=int(self.opt.width), height=int(self.opt.height),
+            width=int(self.cam_width), height=int(self.cam_height),
             start_frame=0, frame_count=1, bounce=0, options='entity_id',
         )
         entity = np.array(entity_id)
-        entity = entity.reshape([int(self.opt.height), int(self.opt.width), -1])[:, :, 0]
+        entity = entity.reshape([int(self.cam_height), int(self.cam_width), -1])[:, :, 0]
         entity = entity - 2
         entity = np.flip(entity, axis = 0)
         entity[np.isinf(entity)] = -1
-        entity[entity>self.opt.nb_objects + 50] = -1
+        entity[entity>15 + 50] = -1
         segmentation = entity.astype(np.int8)
 
         return rgb, depth, segmentation
 
     def initialize_nvisii_scene(self):
-        if not self.opt.noise is True: 
-            nv.enable_denoiser()
-
         # Change the dome light intensity
         nv.set_dome_light_intensity(1.0)
 
