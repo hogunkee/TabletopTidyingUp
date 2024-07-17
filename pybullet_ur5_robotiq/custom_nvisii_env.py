@@ -60,6 +60,7 @@ class TableTopTidyingUpEnv:
         nv.initialize(headless=True, lazy_updates=True) # headless=False
         self.nv_camera = self.set_camera_pose(eye=(0, 0, 1.45), at=(0, 0, 0.3), up=(-1, 0, 0), view='top')
         self.nv_camera_front_top = self.set_camera_pose(eye=(0.5, 0, 1.3), at=(0, 0, 0.3), up=(0, 0, 1), view = 'front_top')
+        nv.ids = []
 
         self.objects_cfg = objects_cfg
         self.set_grid()
@@ -195,11 +196,11 @@ class TableTopTidyingUpEnv:
         floor.get_material().set_base_color((0.8, 0.87, 0.88)) #(0.5,0.5,0.5)
 
         floor_textures = []
-        texture_files = os.listdir(os.path.join(os.path.dirname(os.path.abspath(os.path.dirname(__file__))) ,"../texture"))
+        texture_files = os.listdir(os.path.join(os.path.dirname(os.path.abspath(os.path.dirname(__file__))) ,"texture"))
         texture_files = [f for f in texture_files if f.lower().endswith('.png')]
 
         for i, tf in enumerate(texture_files):
-            tex = nv.texture.create_from_file("tex-%d"%i, os.path.join(os.path.dirname(os.path.abspath(os.path.dirname(__file__))), "../texture/", tf))
+            tex = nv.texture.create_from_file("tex-%d"%i, os.path.join(os.path.dirname(os.path.abspath(os.path.dirname(__file__))), "texture/", tf))
             floor_tex = nv.texture.create_hsv("floor-%d"%i, tex, hue=0, saturation=.5, value=1.0, mix=1.0)
             floor_textures.append((tex, floor_tex))
         self.floor, self.floor_textures = floor, floor_textures
