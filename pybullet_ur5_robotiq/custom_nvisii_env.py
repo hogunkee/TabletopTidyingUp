@@ -195,11 +195,11 @@ class TableTopTidyingUpEnv:
         floor.get_material().set_base_color((0.8, 0.87, 0.88)) #(0.5,0.5,0.5)
 
         floor_textures = []
-        texture_files = os.listdir("../texture")
+        texture_files = os.listdir(os.path.join(os.path.dirname(os.path.abspath(os.path.dirname(__file__))) ,"../texture"))
         texture_files = [f for f in texture_files if f.lower().endswith('.png')]
 
         for i, tf in enumerate(texture_files):
-            tex = nv.texture.create_from_file("tex-%d"%i, os.path.join("../texture/", tf))
+            tex = nv.texture.create_from_file("tex-%d"%i, os.path.join(os.path.dirname(os.path.abspath(os.path.dirname(__file__))), "../texture/", tf))
             floor_tex = nv.texture.create_hsv("floor-%d"%i, tex, hue=0, saturation=.5, value=1.0, mix=1.0)
             floor_textures.append((tex, floor_tex))
         self.floor, self.floor_textures = floor, floor_textures
