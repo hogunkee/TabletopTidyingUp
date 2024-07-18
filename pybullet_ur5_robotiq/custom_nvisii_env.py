@@ -427,7 +427,7 @@ class TableTopTidyingUpEnv:
             count_scene_trials += 1
             if is_feasible or count_scene_trials > 5:
                 break
-
+rgb
         self.pre_selected_objects = copy.deepcopy(selected_objects)
         # if failed to place objects robustly #
         if not is_feasible:
@@ -436,7 +436,7 @@ class TableTopTidyingUpEnv:
         self.pickable_objects = []
         self.get_obj_infos(data_objects_list) ##
         self.table_objects_list = data_objects_list
-        self.nv_ids = update_visual_objects(pybullet_ids, "", metallic_ids=self.metallic_ids, glass_ids=self.glass_ids)
+        self.nv_ids = update_visual_objects(pybullet_ids, "", self.nv_ids, metallic_ids=self.metallic_ids, glass_ids=self.glass_ids)
         return True
     
     def load_obj_without_template(self, selected_objects, init_positions, init_rotations, random):
