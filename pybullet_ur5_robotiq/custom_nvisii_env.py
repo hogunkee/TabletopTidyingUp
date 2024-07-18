@@ -427,7 +427,7 @@ class TableTopTidyingUpEnv:
             count_scene_trials += 1
             if is_feasible or count_scene_trials > 5:
                 break
-rgb
+
         self.pre_selected_objects = copy.deepcopy(selected_objects)
         # if failed to place objects robustly #
         if not is_feasible:
