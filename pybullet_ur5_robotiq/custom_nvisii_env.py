@@ -896,6 +896,9 @@ class TableTopTidyingUpEnv:
             clear_scene()
             self.initialize_nvisii_scene()
             self.set_floor(texture_id=-1)
+
+            self.nv_camera = self.set_camera_pose(eye=(0, 0, 1.45), at=(0, 0, 0.3), up=(-1, 0, 0), view='top')
+            self.nv_camera_front_top = self.set_camera_pose(eye=(0.5, 0, 1.3), at=(0, 0, 0.3), up=(0, 0, 1), view = 'front_top')
         self.nv_ids = []
 
     def reset(self):
