@@ -4,6 +4,7 @@ import os
 import time
 import math
 import random
+from PIL import Image
 
 import sys
 from matplotlib import pyplot as plt
@@ -952,7 +953,7 @@ class TableTopTidyingUpEnv:
         #return rgb, depth, seg
 
     def get_observation(self):
-        self.reset_robot()        
+        #self.reset_robot()        
         self.step_simulation(delay=True)
         # top view
         rgb_top, depth_top, seg_top = self.camera.shot()
