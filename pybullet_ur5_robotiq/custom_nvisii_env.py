@@ -153,6 +153,8 @@ class TableTopTidyingUpEnv:
             width=int(self.cam_width), height=int(self.cam_height), 
             samples_per_pixel=32
         )
+        rgb = np.array(rgb).reshape([int(self.cam_height), int(self.cam_width), -1])[:, :, 0]
+        rgb = np.flip(rgb, axis = 0)
 
         # 2. Depth
         d = nv.render_data(
