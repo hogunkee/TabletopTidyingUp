@@ -150,8 +150,8 @@ class TableTopTidyingUpEnv:
             nv.set_camera_entity(self.nv_camera_front_top)
         # 1. RGB
         nv.render_to_file(
-            width=int(self.opt.width), height=int(self.opt.height), 
-            samples_per_pixel=int(self.opt.spp),
+            width=int(self.cam_width), height=int(self.cam_height), 
+            samples_per_pixel=32,
             file_path=f".tmp_rgb.png"
         )
         rgb = np.array(Image.open(".tmp_rgb.png"))
