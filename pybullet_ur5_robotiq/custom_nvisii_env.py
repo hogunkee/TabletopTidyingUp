@@ -183,6 +183,7 @@ class TableTopTidyingUpEnv:
         return rgb, depth, segmentation
 
     def initialize_nvisii_scene(self):
+        nv.enable_denoiser()
         # Change the dome light intensity
         nv.set_dome_light_intensity(1.0)
 
