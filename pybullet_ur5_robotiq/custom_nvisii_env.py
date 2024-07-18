@@ -600,7 +600,7 @@ class TableTopTidyingUpEnv:
         rot angle: based on the pybullet coordinate. difference between target & init. 
         target position : image pixel. 2d (y,x) - based on top view image.
         '''
-        self.reset_robot()        
+        #self.reset_robot()        
 
         target_position_world = self.camera.rgbd_2_world(target_position[0], target_position[1])
         target_position_world += np.array([0., 0., 0.03])
@@ -911,7 +911,7 @@ class TableTopTidyingUpEnv:
         p.resetSimulation()
         self.initialize_pybullet_scene()
 
-        self.reset_robot()        
+        #self.reset_robot()        
         self.step_simulation(delay=False)
 
         # top view
