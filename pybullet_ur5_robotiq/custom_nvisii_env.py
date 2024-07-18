@@ -116,6 +116,20 @@ class TableTopTidyingUpEnv:
         self.initialize_pybullet_scene()
 
 
+    def set_floor(self, texture_id=-1):
+        # set floor material #
+        roughness = random.uniform(0.1, 0.5)
+        self.floor.get_material().clear_base_color_texture()
+        self.floor.get_material().set_roughness(roughness)
+
+        if texture_id==-1: # random texture #
+            f_cidx = np.random.choice(len(self.floor_textures))
+            tex, floor_tex = self.floor_textures[f_cidx]
+        else:
+            tex, floor_tex = self.floor_textures[texture_id]
+        self.floor.get_material().set_base_color_texture(floor_tex)
+        self.floor.get_material().set_roughness_texture(tex)
+
     def set_camera_pose(self, eye, at=(0.1, 0, 0), up=(0, 0, 1), view='top'):
         camera = nv.entity.create(
             name = "camera_" + view,
@@ -886,6 +900,7 @@ class TableTopTidyingUpEnv:
         clear_scene()
         self.initialize_nvisii_scene()
         self.initialize_pybullet_scene()
+        self.set_floor(texture_id=-1)
 
         self.reset_robot()        
         self.step_simulation(delay=False)
@@ -1260,4 +1275,4 @@ class TableTopTidyingUpEnv:
                     p.stepSimulation()
         self.pre_selected_objects = list(template_id_to_sim_id.values())
 
-        nv.ids = update_visual_objects(pybullet_ids, "", metallic_ids=self.metallic_ids, glass_ids=self.glass_ids)
+        nv.ids = update_visual_objects(pybullet_ids, "", nv.ids, metallic_ids=self.metallic_ids, glass_ids=self.glass_ids)
