@@ -60,7 +60,7 @@ class TableTopTidyingUpEnv:
         nv.initialize(headless=True, lazy_updates=True) # headless=False
         self.nv_camera = self.set_camera_pose(eye=(0, 0, 1.45), at=(0, 0, 0.3), up=(-1, 0, 0), view='top')
         self.nv_camera_front_top = self.set_camera_pose(eye=(0.5, 0, 1.3), at=(0, 0, 0.3), up=(0, 0, 1), view = 'front_top')
-        nv.ids = []
+        self.nv_ids = []
 
         self.objects_cfg = objects_cfg
         self.set_grid()
@@ -114,7 +114,6 @@ class TableTopTidyingUpEnv:
         self.physicsClient = p.connect(p.GUI if self.vis else p.DIRECT)
         self.initialize_nvisii_scene()
         self.initialize_pybullet_scene()
-        nv.ids = None
 
 
     def set_floor(self, texture_id=-1):
@@ -397,7 +396,7 @@ class TableTopTidyingUpEnv:
             if obj in glass_objects:
                 self.glass_ids.append(obj_id)
 
-        nv.ids = update_visual_objects(pybullet_ids, "", metallic_ids=self.metallic_ids, glass_ids=self.glass_ids)
+        self.nv_ids = update_visual_objects(pybullet_ids, "", metallic_ids=self.metallic_ids, glass_ids=self.glass_ids)
         self.current_pybullet_ids = copy.deepcopy(pybullet_ids)
         return pybullet_ids
 
@@ -435,7 +434,7 @@ class TableTopTidyingUpEnv:
         self.pickable_objects = []
         self.get_obj_infos(data_objects_list) ##
         self.table_objects_list = data_objects_list
-        nv.ids = update_visual_objects(pybullet_ids, "", metallic_ids=self.metallic_ids, glass_ids=self.glass_ids)
+        self.nv_ids = update_visual_objects(pybullet_ids, "", metallic_ids=self.metallic_ids, glass_ids=self.glass_ids)
         return True
     
     def load_obj_without_template(self, selected_objects, init_positions, init_rotations, random):
@@ -888,8 +887,8 @@ class TableTopTidyingUpEnv:
                 self.step_simulation(delay=False)
 
     def reset_nvisii(self):
-        if not nv.ids is None:
-            remove_visual_objects(nv.ids)
+        if len(self.nv_ids)>0:
+            remove_visual_objects(self.nv_ids)
             clear_scene()
             self.initialize_nvisii_scene()
             self.set_floor(texture_id=-1)
@@ -1281,4 +1280,4 @@ class TableTopTidyingUpEnv:
                     p.stepSimulation()
         self.pre_selected_objects = list(template_id_to_sim_id.values())
 
-        nv.ids = update_visual_objects(pybullet_ids, "", nv.ids, metallic_ids=self.metallic_ids, glass_ids=self.glass_ids)
+        self.nv_ids = update_visual_objects(pybullet_ids, "", self.nv_ids, metallic_ids=self.metallic_ids, glass_ids=self.glass_ids)
