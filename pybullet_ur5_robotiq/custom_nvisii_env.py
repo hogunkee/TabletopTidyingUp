@@ -114,6 +114,7 @@ class TableTopTidyingUpEnv:
         self.physicsClient = p.connect(p.GUI if self.vis else p.DIRECT)
         self.initialize_nvisii_scene()
         self.initialize_pybullet_scene()
+        nv.ids = None
 
 
     def set_floor(self, texture_id=-1):
@@ -886,21 +887,26 @@ class TableTopTidyingUpEnv:
                                         maxVelocity=joint.maxVelocity)
                 self.step_simulation(delay=False)
 
+    def reset_nvisii(self):
+        if not nv.ids is None:
+            remove_visual_objects(nv.ids)
+            clear_scene()
+            self.initialize_nvisii_scene()
+            self.set_floor(texture_id=-1)
+
     def reset(self):
         pybullet_ids = copy.deepcopy(self.current_pybullet_ids)
-        remove_visual_objects(nv.ids)
         # remove spawned objects before #
         self.spawned_objects = None
         self.pre_selected_objects = []
         self.current_pybullet_ids = []
         self.spawn_obj_num = 0
+
+        self.reset_nvisii()
         
         #self.reset_robot()
         p.resetSimulation()
-        clear_scene()
-        self.initialize_nvisii_scene()
         self.initialize_pybullet_scene()
-        self.set_floor(texture_id=-1)
 
         self.reset_robot()        
         self.step_simulation(delay=False)
