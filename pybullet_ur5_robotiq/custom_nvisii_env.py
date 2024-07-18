@@ -896,6 +896,7 @@ class TableTopTidyingUpEnv:
             clear_scene()
             self.initialize_nvisii_scene()
             self.set_floor(texture_id=-1)
+        self.nv_ids = []
 
     def reset(self):
         pybullet_ids = copy.deepcopy(self.current_pybullet_ids)
