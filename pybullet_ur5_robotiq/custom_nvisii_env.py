@@ -1283,3 +1283,27 @@ rgb
         self.pre_selected_objects = list(template_id_to_sim_id.values())
 
         self.nv_ids = update_visual_objects(pybullet_ids, "", self.nv_ids, metallic_ids=self.metallic_ids, glass_ids=self.glass_ids)
+
+
+if __name__=='__main__':
+    camera_top = Camera((0, 0, 1.45), 0.02, 2, (480, 360), 60)
+    camera_front_top = Camera_front_top((0.5, 0, 1.3), 0.02, 2, (480, 360), 60)
+
+    data_dir = '/ssd/disk'
+    objects_cfg = { 'paths': {
+            'pybullet_object_path' : os.path.join(data_dir, 'pybullet-URDF-models/urdf_models/models'),
+            'ycb_object_path' : os.path.join(data_dir, 'YCB_dataset'),
+            'housecat_object_path' : os.path.join(data_dir, 'housecat6d/obj_models_small_size_final'),
+        },
+        'split' : 'train'
+    }
+    
+    gui_on = True
+    env = TableTopTidyingUpEnv(objects_cfg, camera_top, camera_front_top, vis=gui_on, gripper_type='85')
+    p.resetDebugVisualizerCamera(2.0, -270., -60., (0., 0., 0.))
+    p.configureDebugVisualizer(p.COV_ENABLE_SHADOWS, 1)  # Shadows on/off
+    p.addUserDebugLine([0, -0.5, 0], [0, -0.5, 1.1], [0, 1, 0])
+
+    #env.set_floor(texture_id=-1)
+    env.reset()
+
