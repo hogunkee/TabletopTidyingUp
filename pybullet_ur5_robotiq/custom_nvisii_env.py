@@ -149,12 +149,12 @@ class TableTopTidyingUpEnv:
         elif camera == 'front_top':
             nv.set_camera_entity(self.nv_camera_front_top)
         # 1. RGB
-        rgb = nv.render(
-            width=int(self.cam_width), height=int(self.cam_height), 
-            samples_per_pixel=32
+        nv.render_to_file(
+            width=int(self.opt.width), height=int(self.opt.height), 
+            samples_per_pixel=int(self.opt.spp),
+            file_path=f".tmp_rgb.png"
         )
-        rgb = np.array(rgb).reshape([int(self.cam_height), int(self.cam_width), -1])[:, :, 0]
-        rgb = np.flip(rgb, axis = 0)
+        rgb = np.array(Image.open(".tmp_rgb.png"))
 
         # 2. Depth
         d = nv.render_data(
@@ -174,10 +174,10 @@ class TableTopTidyingUpEnv:
         )
         entity = np.array(entity_id)
         entity = entity.reshape([int(self.cam_height), int(self.cam_width), -1])[:, :, 0]
-        entity = entity - 2
-        entity = np.flip(entity, axis = 0)
         entity[np.isinf(entity)] = -1
         entity[entity>15 + 50] = -1
+        entity[entity==entity.max()] = 1
+        entity = np.flip(entity, axis = 0)
         segmentation = entity.astype(np.int8)
 
         return rgb, depth, segmentation
