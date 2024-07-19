@@ -116,8 +116,12 @@ class TableTopTidyingUpEnv:
         self.initialize_pybullet_scene()
 
     def setup_nv_cameras(self):
-        self.nv_camera = self.set_camera_pose(eye=(self.camera.x, self.camera.y, self.camera.z), at=(0, 0, 0.3), up=(-1, 0, 0), view='top')
-        self.nv_camera_front_top = self.set_camera_pose(eye=(self.camera_front_top.x, self.camera_front_top.y, self.camera_front_top.z), at=(0, 0, 0.3), up=(0, 0, 1), view = 'front_top')
+        self.nv_camera = self.set_camera_pose(
+                eye=(self.camera.x, self.camera.y, self.camera.z), 
+                at=self.camera.at, up=self.camera.up, view='top')
+        self.nv_camera_front_top = self.set_camera_pose(
+                eye=(self.camera_front_top.x, self.camera_front_top.y, self.camera_front_top.z), 
+                at=self.camera_front_top.at, up=self.camera_front_top.up, view = 'front_top')
 
     def set_floor(self, texture_id=-1):
         # set floor material #

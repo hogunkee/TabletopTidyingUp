@@ -214,16 +214,18 @@ def setup_sisbot_force(p, robotID, gripper_type):
 
 
 class Camera:
-    def __init__(self, cam_pos, near, far, size, fov):
+    def __init__(self, cam_pos, near, far, size, fov, at=None):
         self.x, self.y, self.z = cam_pos
         self.width, self.height = size
         self.near, self.far = near, far
         self.fov = fov
+        if at is None:
+            at = [0, 0, 0.3]
+        self.at = at
+        self.up = [-1, 0, 0]
 
         aspect = self.width / self.height
-        self.view_matrix = p.computeViewMatrix([self.x, self.y, self.z],
-                                               [0, 0, 0.3],
-                                               [-1, 0, 0])
+        self.view_matrix = p.computeViewMatrix([self.x, self.y, self.z], self.at, self.up)
         self.projection_matrix = p.computeProjectionMatrixFOV(self.fov, aspect, self.near, self.far)
 
         _view_matrix = np.array(self.view_matrix).reshape((4, 4), order='F')
@@ -280,16 +282,18 @@ class Camera:
 
 
 class Camera_front_top:
-    def __init__(self, cam_pos, near, far, size, fov):
+    def __init__(self, cam_pos, near, far, size, fov, at=None):
         self.x, self.y, self.z = cam_pos
         self.width, self.height = size
         self.near, self.far = near, far
         self.fov = fov
+        if at is None:
+            at = [0, 0, 0.3]
+        self.at = at
+        self.up = [0, 0, 1]
 
         aspect = self.width / self.height
-        self.view_matrix = p.computeViewMatrix([self.x, self.y, self.z],
-                                               [0, 0, 0.3],
-                                               [0, 0, 1])
+        self.view_matrix = p.computeViewMatrix([self.x, self.y, self.z], self.at, self.up)
         self.projection_matrix = p.computeProjectionMatrixFOV(self.fov, aspect, self.near, self.far)
         print(self.projection_matrix)
         _view_matrix = np.array(self.view_matrix).reshape((4, 4), order='F')
