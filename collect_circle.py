@@ -376,7 +376,7 @@ class TabletopScenes(object):
         self.floor.get_material().set_base_color_texture(floor_tex)
         self.floor.get_material().set_roughness_texture(tex)
 
-    def arrange_objects(self, scene_id, select=True, random=False ):
+    def arrange_objects(self, scene_id, select=True, random=False, save=True):
         pybullet_ids = copy.deepcopy(self.current_pybullet_ids)
 
         # set objects #
@@ -408,7 +408,8 @@ class TabletopScenes(object):
         
         nv.ids = update_visual_objects(pybullet_ids, "", nv.ids, metallic_ids=self.metallic_ids, glass_ids=self.glass_ids)
         self.pickable_objects = []
-        self.save_data(scene_id, data_objects_list)
+        if save:
+            self.save_data(scene_id, data_objects_list)
         return True
 
     def load_obj_without_template(self, selected_objects, init_positions, init_rotations):
@@ -634,7 +635,7 @@ class TabletopScenes(object):
             
                 
     # TODO : change this function to move pickable objects to a random place
-    def random_messup_objects(self, scene_id, random_rot = True):
+    def random_messup_objects(self, scene_id, random_rot=True, save=True):
         pybullet_ids = copy.deepcopy(self.current_pybullet_ids)
         selected_objects = copy.deepcopy(self.pre_selected_objects)
         data_objects_list = {id: self.objects_list[id] for id in selected_objects}
@@ -717,8 +718,8 @@ class TabletopScenes(object):
                 if stop_linear and stop_rotation:
                     break
         nv.ids = update_visual_objects(pybullet_ids, "", nv.ids, metallic_ids=self.metallic_ids, glass_ids=self.glass_ids)
-        
-        self.save_data(scene_id, data_objects_list)
+        if save:
+            self.save_data(scene_id, data_objects_list)
         return True
 
     def render_and_save_scene(self,out_folder, camera):
