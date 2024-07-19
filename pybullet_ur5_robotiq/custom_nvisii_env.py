@@ -571,7 +571,7 @@ class TableTopTidyingUpEnv:
         """
         Hook p.stepSimulation()
         """
-        for i in range(100):
+        for i in range(300):
             p.stepSimulation()
         if self.vis and delay is True:
             time.sleep(self.SIMULATION_STEP_DELAY)
@@ -603,12 +603,13 @@ class TableTopTidyingUpEnv:
         #self.reset_robot()        
 
         target_position_world = self.camera.rgbd_2_world(target_position[0], target_position[1])
-        target_position_world += np.array([0., 0., 0.03])
+        target_position_world += np.array([0., 0., 0.05])
         orig_pos, orig_rot = p.getBasePositionAndOrientation(target_obj)
         rot = euler2quat([0, 0, rot_angle])
         rot = quaternion_multiply(rot, orig_rot)
         p.resetBasePositionAndOrientation(target_obj, target_position_world, rot)
         self.step_simulation(delay=True) #False
+        self.nv_ids = update_visual_objects(pybullet_ids, "", self.nv_ids, metallic_ids=self.metallic_ids, glass_ids=self.glass_ids)
 
         # top view
         rgb_top, depth_top, seg_top = self.camera.shot()
