@@ -59,8 +59,8 @@ class TableTopTidyingUpEnv:
 
         # NviSii cameras
         nv.initialize(headless=True, lazy_updates=True) # headless=False
-        self.nv_camera = self.set_camera_pose(eye=(0, 0, 1.45), at=(0, 0, 0.3), up=(-1, 0, 0), view='top')
-        self.nv_camera_front_top = self.set_camera_pose(eye=(0.5, 0, 1.3), at=(0, 0, 0.3), up=(0, 0, 1), view = 'front_top')
+        self.nv_camera = self.set_camera_pose(eye=(camera.x, camera.y, camera.z), at=(0, 0, 0.3), up=(-1, 0, 0), view='top')
+        self.nv_camera_front_top = self.set_camera_pose(eye=(camera_front_top.x, camera_front_top.y, camera_front_top.z), at=(0, 0, 0.3), up=(0, 0, 1), view = 'front_top')
         self.nv_ids = []
 
         self.objects_cfg = objects_cfg
