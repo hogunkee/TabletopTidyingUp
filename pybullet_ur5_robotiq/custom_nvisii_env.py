@@ -59,8 +59,7 @@ class TableTopTidyingUpEnv:
 
         # NviSii cameras
         nv.initialize(headless=True, lazy_updates=True) # headless=False
-        self.nv_camera = self.set_camera_pose(eye=(camera.x, camera.y, camera.z), at=(0, 0, 0.3), up=(-1, 0, 0), view='top')
-        self.nv_camera_front_top = self.set_camera_pose(eye=(camera_front_top.x, camera_front_top.y, camera_front_top.z), at=(0, 0, 0.3), up=(0, 0, 1), view = 'front_top')
+        self.setup_nv_cameras()
         self.nv_ids = []
 
         self.objects_cfg = objects_cfg
@@ -116,6 +115,9 @@ class TableTopTidyingUpEnv:
         self.initialize_nvisii_scene()
         self.initialize_pybullet_scene()
 
+    def setup_nv_cameras(self):
+        self.nv_camera = self.set_camera_pose(eye=(self.camera.x, self.camera.y, self.camera.z), at=(0, 0, 0.3), up=(-1, 0, 0), view='top')
+        self.nv_camera_front_top = self.set_camera_pose(eye=(self.camera_front_top.x, self.camera_front_top.y, self.camera_front_top.z), at=(0, 0, 0.3), up=(0, 0, 1), view = 'front_top')
 
     def set_floor(self, texture_id=-1):
         # set floor material #
@@ -609,6 +611,9 @@ class TableTopTidyingUpEnv:
         rot = quaternion_multiply(rot, orig_rot)
         p.resetBasePositionAndOrientation(target_obj, target_position_world, rot)
         self.step_simulation(delay=True) #False
+
+        # update nvisii objects
+        pybullet_ids = copy.deepcopy(self.current_pybullet_ids)
         self.nv_ids = update_visual_objects(pybullet_ids, "", self.nv_ids, metallic_ids=self.metallic_ids, glass_ids=self.glass_ids)
 
         # top view
@@ -898,8 +903,7 @@ class TableTopTidyingUpEnv:
             self.initialize_nvisii_scene()
             self.set_floor(texture_id=-1)
 
-            self.nv_camera = self.set_camera_pose(eye=(0, 0, 1.45), at=(0, 0, 0.3), up=(-1, 0, 0), view='top')
-            self.nv_camera_front_top = self.set_camera_pose(eye=(0.5, 0, 1.3), at=(0, 0, 0.3), up=(0, 0, 1), view = 'front_top')
+            self.setup_nv_cameras()
         self.nv_ids = []
 
     def reset(self):
