@@ -117,6 +117,9 @@ def generate_scene_shape(scene_type, num_objects):
     elif scene_type=='line-rotated':
         check_feasible = False
         while not check_feasible:
+            interval = np.random.uniform(0.15, 0.25)
+            rot90 = np.random.choice(2)
+
             xc, yc = np.array(random_pos_on_table())[:2]
             #x_hat = np.random.uniform(size=2) - 0.5
             x_hats = [[1, 0], [0, 1], [-1, 0], [0, -1],
@@ -127,9 +130,9 @@ def generate_scene_shape(scene_type, num_objects):
             x_hat = x_hats[s]
             angle = angles[s]
             x_hat /= np.linalg.norm(x_hat)
-            x1, y1 = [xc, yc] - x_hat * 0.15 * num_objects/2
-            x2, y2 = [xc, yc] + x_hat * 0.15 * num_objects/2
-            if min(x1, x2) < -0.3 or max(x1, x2) > 0.3:
+            x1, y1 = [xc, yc] - x_hat * interval * num_objects/2
+            x2, y2 = [xc, yc] + x_hat * interval * num_objects/2
+            if min(x1, x2) < -0.5 or max(x1, x2) > 0.5:
                 check_feasible = False
                 continue
             if min(y1, y2) < -0.4 or max(y1, y2) > 0.4:
@@ -141,11 +144,13 @@ def generate_scene_shape(scene_type, num_objects):
         ys = np.linspace(y1, y2, num_objects)
         zs = np.ones(num_objects) * z_default + np.arange(num_objects) * 0.05
         positions = np.concatenate([xs, ys, zs]).reshape(3, num_objects).T
-        rotations = []
+        rotations = [euler2quat([0, 0, angle + rot90*np.pi/2])] * num_objects
     elif scene_type=='circle':
         check_feasible = False
         while not check_feasible:
-            radius = 0.15
+            radius = np.random.uniform(0.15, 0.3) #0.15
+            rot90 = np.random.choice(2)
+
             x0, y0 = np.array(random_pos_on_table())[:2]
             thetas = np.linspace(0, 1, num_objects+1)[:-1] + np.random.random()
             thetas %= 1
@@ -161,7 +166,7 @@ def generate_scene_shape(scene_type, num_objects):
                 continue
             check_feasible = True
         positions = np.concatenate([xs, ys, zs]).reshape(3, num_objects).T
-        rotations = []
+        rotations = [euler2quat([0, 0, th + rot90*np.pi/2]) for th in thetas]
     return positions, rotations
 
 def get_rotation(roll, pitch, yaw):
