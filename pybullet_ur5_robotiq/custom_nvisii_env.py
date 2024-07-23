@@ -50,7 +50,7 @@ class TableTopTidyingUpEnv:
 
     SIMULATION_STEP_DELAY = 1 / 240.
 
-    def __init__(self, objects_cfg, camera: Camera, camera_front_top: Camera_front_top, vis=False, num_objs=3, gripper_type='85') -> None:
+    def __init__(self, objects_cfg, camera: Camera, camera_front_top: Camera_front_top, vis=False, num_objs=3, gripper_type='85', logname='') -> None:
         self.vis = vis
         self.num_objs = num_objs ##
         self.camera = camera
@@ -109,6 +109,7 @@ class TableTopTidyingUpEnv:
                     'rotation': 0.25, #0.15,
                     'linear': 0.003,
                     'angular': 0.03} # angular : 0.003 (too tight to random collect)
+        self.logname = logname
 
         # define environment
         self.physicsClient = p.connect(p.GUI if self.vis else p.DIRECT)
@@ -159,9 +160,9 @@ class TableTopTidyingUpEnv:
         nv.render_to_file(
             width=int(self.cam_width), height=int(self.cam_height), 
             samples_per_pixel=32,
-            file_path=f".tmp_rgb.png"
+            file_path=f".tmp_%s_rgb.png"%self.logname
         )
-        rgb = np.array(Image.open(".tmp_rgb.png"))
+        rgb = np.array(Image.open(".tmp_%s_rgb.png"%self.logname))
 
         # 2. Depth
         d = nv.render_data(
