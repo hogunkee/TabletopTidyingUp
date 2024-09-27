@@ -602,6 +602,11 @@ class TableTopTidyingUpEnv:
         print('changed depth pixel count:', changed_depth_counter)
         return changed_depth_counter > self.DEPTH_CHANGE_COUNTER_THRESHOLD
 
+    def nvisii_update(self):
+        # update nvisii objects
+        pybullet_ids = copy.deepcopy(self.current_pybullet_ids)
+        self.nv_ids = update_visual_objects(pybullet_ids, "", self.nv_ids, metallic_ids=self.metallic_ids, glass_ids=self.glass_ids)
+
     def step(self, target_obj, target_position,rot_angle, debug=False): 
         '''
         rot angle: based on the pybullet coordinate. difference between target & init. 
@@ -617,9 +622,10 @@ class TableTopTidyingUpEnv:
         p.resetBasePositionAndOrientation(target_obj, target_position_world, rot)
         self.step_simulation(delay=True) #False
 
+        self.nvisii_update()
         # update nvisii objects
-        pybullet_ids = copy.deepcopy(self.current_pybullet_ids)
-        self.nv_ids = update_visual_objects(pybullet_ids, "", self.nv_ids, metallic_ids=self.metallic_ids, glass_ids=self.glass_ids)
+        #pybullet_ids = copy.deepcopy(self.current_pybullet_ids)
+        #self.nv_ids = update_visual_objects(pybullet_ids, "", self.nv_ids, metallic_ids=self.metallic_ids, glass_ids=self.glass_ids)
 
         # top view
         rgb_top, depth_top, seg_top = self.camera.shot()
